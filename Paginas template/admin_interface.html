@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THROTTLE — Painel Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,900&family=Barlow:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e81a1a;
+    --red-dark: #a80f0f;
+    --red-glow: rgba(232,26,26,0.2);
+    --black: #0a0a0a;
+    --dark: #111111;
+    --card: #181818;
+    --card2: #1e1e1e;
+    --border: rgba(255,255,255,0.07);
+    --border-red: rgba(232,26,26,0.3);
+    --text: #e0e0e0;
+    --muted: #777;
+    --white: #ffffff;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --sidebar-w: 260px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--black);
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--dark); }
+  ::-webkit-scrollbar-thumb { background: var(--red); border-radius: 2px; }
+
+  /* ── NOISE ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.35;
+  }
+
+  /* ══════════════════════════════
+     LOGIN SCREEN
+  ══════════════════════════════ */
+  #login-screen {
+    position: fixed; inset: 0;
+    background: var(--black);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 500;
+    transition: opacity 0.5s, visibility 0.5s;
+  }
+  #login-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+  .login-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 110%, rgba(232,26,26,0.18) 0%, transparent 70%),
+      url('https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=1600&q=60') center/cover no-repeat;
+    opacity: 0.3;
+  }
+  .login-bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, var(--black) 30%, rgba(10,10,10,0.85) 100%);
+  }
+
+  .login-box {
+    position: relative; z-index: 2;
+    width: 100%; max-width: 420px;
+    padding: 0 24px;
+  }
+
+  .login-logo {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .login-logo-mark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    letter-spacing: 6px;
+    color: var(--white);
+    line-height: 1;
+  }
+  .login-logo-mark span { color: var(--red); }
+  .login-logo-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .login-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .login-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--red), transparent);
+  }
+
+  .login-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 28px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .login-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+  .field label {
+    display: block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .field input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 12px 16px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field input:focus { border-color: var(--red); background: rgba(232,26,26,0.04); }
+  .field input::placeholder { color: var(--muted); }
+
+  .login-error {
+    background: rgba(232,26,26,0.12);
+    border: 1px solid var(--border-red);
+    color: #ff6b6b;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .login-error.show { display: block; }
+
+  .btn-login {
+    width: 100%;
+    background: var(--red);
+    color: var(--white);
+    border: none;
+    padding: 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-top: 8px;
+  }
+  .btn-login:hover { background: var(--red-dark); transform: translateY(-1px); }
+  .btn-login:active { transform: translateY(0); }
+
+  .login-hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 20px;
+    opacity: 0.6;
+  }
+
+  /* ══════════════════════════════
+     ADMIN SHELL
+  ══════════════════════════════ */
+  #admin-shell {
+    display: none;
+    min-height: 100vh;
+  }
+  #admin-shell.visible { display: flex; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--dark);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    z-index: 100;
+    overflow-y: auto;
+  }
+
+  .sidebar-brand {
+    padding: 24px 24px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo-icon {
+    width: 36px; height: 36px;
+    background: var(--red);
+    clip-path: polygon(20% 0%, 80% 0%, 100% 50%, 80% 100%, 20% 100%, 0% 50%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .sidebar-brand-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 3px;
+    line-height: 1;
+  }
+  .sidebar-brand-name span { color: var(--red); }
+  .sidebar-brand-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .sidebar-section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 20px 24px 8px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 24px;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+    border-left: 3px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover { color: var(--white); background: rgba(255,255,255,0.03); }
+  .nav-item.active {
+    color: var(--white);
+    border-left-color: var(--red);
+    background: rgba(232,26,26,0.08);
+  }
+  .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--red);
+    color: var(--white);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    font-weight: 700;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidebar-user-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--red);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    flex-shrink: 0;
+    border: 2px solid var(--border-red);
+  }
+  .sidebar-user-info { flex: 1; min-width: 0; }
+  .sidebar-user-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sidebar-user-role {
+    font-size: 10px;
+    color: var(--red);
+    letter-spacing: 1px;
+    font-family: 'Barlow Condensed', sans-serif;
+    text-transform: uppercase;
+  }
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  /* MAIN CONTENT */
+  .main-content {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    display: flex; flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    background: rgba(17,17,17,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 36px;
+    height: 62px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+    flex-shrink: 0;
+  }
+  .topbar-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 22px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+  .btn-primary {
+    background: var(--red);
+    color: var(--white);
+    border: none;
+    padding: 9px 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-primary:hover { background: var(--red-dark); transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 9px 18px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-secondary:hover { border-color: var(--red); color: var(--white); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid var(--border-red);
+    padding: 7px 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-danger:hover { background: rgba(232,26,26,0.12); }
+
+  .btn-icon {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.2s;
+  }
+  .btn-icon:hover { border-color: var(--red); color: var(--white); }
+
+  /* PAGE WRAPPER */
+  .page { display: none; flex: 1; padding: 32px 36px; animation: fadeIn 0.25s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ── DASHBOARD ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--border-red); }
+  .stat-card::before {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .stat-card:hover::before { transform: scaleX(1); }
+  .stat-card-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .stat-card-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    line-height: 1;
+    color: var(--white);
+    letter-spacing: -1px;
+  }
+  .stat-card-num span { color: var(--red); }
+  .stat-card-delta {
+    font-size: 12px;
+    color: var(--success);
+    margin-top: 6px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .stat-card-icon {
+    position: absolute; top: 20px; right: 20px;
+    font-size: 28px;
+    opacity: 0.12;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+  }
+  .panel-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .panel-title::before {
+    content: '';
+    width: 16px; height: 2px;
+    background: var(--red);
+  }
+
+  /* ── POSTS TABLE ── */
+  .posts-toolbar {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .search-input {
+    flex: 1; min-width: 200px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 9px 16px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--red); }
+  .search-input::placeholder { color: var(--muted); }
+
+  .filter-select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .filter-select:focus { border-color: var(--red); }
+
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead tr {
+    background: rgba(255,255,255,0.03);
+  }
+  th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background 0.15s; }
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .status-published { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+  .status-draft { background: rgba(245,158,11,0.12); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+
+  .cat-tag {
+    display: inline-block;
+    background: rgba(232,26,26,0.15);
+    color: var(--red);
+    border: 1px solid var(--border-red);
+    padding: 2px 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .table-actions { display: flex; gap: 8px; }
+  .tbl-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tbl-btn:hover { border-color: var(--red); color: var(--white); }
+  .tbl-btn.del:hover { background: rgba(232,26,26,0.15); }
+
+  .post-thumb {
+    width: 48px; height: 36px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    display: block;
+  }
+
+  /* ── POST EDITOR ── */
+  .editor-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    align-items: start;
+  }
+  .editor-main { display: flex; flex-direction: column; gap: 16px; }
+  .editor-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .form-input, .form-textarea, .form-select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 11px 14px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--red); background: rgba(232,26,26,0.03); }
+  .form-input::placeholder, .form-textarea::placeholder { color: var(--muted); }
+  .form-textarea { resize: vertical; min-height: 320px; line-height: 1.6; }
+  .form-select { cursor: pointer; }
+
+  .title-input {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 24px;
+    text-transform: uppercase;
+    letter-spacing: 0px;
+    padding: 14px 16px;
+  }
+
+  .img-preview {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    display: block;
+    background: var(--dark);
+  }
+  .img-placeholder {
+    width: 100%;
+    aspect-ratio: 16/9;
+    border: 1px dashed var(--border);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    background: var(--dark);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .img-placeholder:hover { border-color: var(--red); color: var(--white); }
+  .img-placeholder span { font-size: 28px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--success);
+    padding: 14px 20px;
+    font-size: 13px;
+    display: flex; align-items: center; gap: 10px;
+    z-index: 1000;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    max-width: 320px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { border-left-color: var(--red); }
+  .toast-icon { font-size: 16px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; visibility: hidden;
+    transition: all 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; visibility: visible; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 36px;
+    width: 100%; max-width: 460px;
+    position: relative;
+    transform: scale(0.94);
+    transition: transform 0.25s;
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+  .modal-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 24px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 24px; justify-content: flex-end; }
+
+  /* ── CATEGORIES ── */
+  .cats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .cat-card-admin {
+    background: var(--card);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+  .cat-card-admin:hover { border-color: var(--border-red); }
+  .cat-card-img {
+    height: 120px;
+    object-fit: cover;
+    width: 100%;
+    display: block;
+    filter: brightness(0.6);
+  }
+  .cat-card-body { padding: 16px; }
+  .cat-card-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 20px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .cat-card-count { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .cat-card-actions { display: flex; gap: 8px; }
+
+  /* ── SETTINGS ── */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .settings-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 28px;
+  }
+  .settings-section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 24px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .settings-section-title::before {
+    content: '';
+    width: 14px; height: 2px;
+    background: var(--red);
+  }
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-size: 13px; }
+  .toggle-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .toggle {
+    width: 40px; height: 22px;
+    background: var(--border);
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--red); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .toggle.on::after { transform: translateX(18px); }
+
+  /* QUICK STATS on dashboard */
+  .recent-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .recent-item:last-child { border-bottom: none; }
+  .recent-thumb {
+    width: 52px; height: 38px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .recent-info { flex: 1; min-width: 0; }
+  .recent-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 3px;
+  }
+  .recent-meta { font-size: 11px; color: var(--muted); }
+
+  .activity-item {
+    display: flex; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot {
+    width: 8px; height: 8px;
+    background: var(--red);
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .activity-time { color: var(--muted); font-size: 11px; margin-top: 3px; }
+
+  /* Charts area placeholder */
+  .chart-bar-row { display: flex; gap: 6px; align-items: flex-end; height: 80px; padding: 0 24px 16px; }
+  .chart-bar {
+    flex: 1;
+    background: var(--red);
+    opacity: 0.7;
+    border-radius: 2px 2px 0 0;
+    transition: opacity 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+  .chart-bar:hover { opacity: 1; }
+  .chart-labels { display: flex; gap: 6px; padding: 0 24px 8px; }
+  .chart-label { flex: 1; font-size: 9px; color: var(--muted); text-align: center; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; text-transform: uppercase; margin-bottom: 6px; }
+  .empty-state-text { font-size: 13px; }
+
+  /* PAGINATION */
+  .pagination { display: flex; gap: 4px; align-items: center; margin-top: 20px; }
+  .page-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .page-btn:hover, .page-btn.active { border-color: var(--red); color: var(--white); background: rgba(232,26,26,0.1); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+    .sidebar.open { transform: none; }
+    .main-content { margin-left: 0; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .editor-layout { grid-template-columns: 1fr; }
+    .settings-grid { grid-template-columns: 1fr; }
+    .cats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-bg"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-mark">THROTTLE<span>.</span></div>
+      <div class="login-logo-sub">Painel de Administração</div>
+    </div>
+    <div class="login-card">
+      <div class="login-title">Acesso Restrito</div>
+      <div class="login-subtitle">Entre com suas credenciais para continuar</div>
+      <div class="login-error" id="login-error">Usuário ou senha incorretos. Tente novamente.</div>
+      <div class="field">
+        <label>Usuário</label>
+        <input type="text" id="login-user" placeholder="admin" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-login" onclick="doLogin()">▶ Entrar no Painel</button>
+      <div class="login-hint">Credenciais padrão: admin / throttle2025</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     ADMIN SHELL
+════════════════════════════════════════ -->
+<div id="admin-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo-icon">⬡</div>
+      <div>
+        <div class="sidebar-brand-name">THROTTLE<span>.</span></div>
+        <div class="sidebar-brand-sub">Admin</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section-label">Principal</div>
+    <div class="nav-item active" onclick="goTo('dashboard', this)">
+      <span class="nav-icon">◈</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="goTo('posts', this)">
+      <span class="nav-icon">◧</span> Posts
+      <span class="nav-badge" id="posts-count-badge">8</span>
+    </div>
+    <div class="nav-item" onclick="goTo('new-post', this)">
+      <span class="nav-icon">✦</span> Novo Post
+    </div>
+
+    <div class="sidebar-section-label">Conteúdo</div>
+    <div class="nav-item" onclick="goTo('categories', this)">
+      <span class="nav-icon">▦</span> Categorias
+    </div>
+    <div class="nav-item" onclick="goTo('media', this)">
+      <span class="nav-icon">◉</span> Mídia
+    </div>
+
+    <div class="sidebar-section-label">Sistema</div>
+    <div class="nav-item" onclick="goTo('settings', this)">
+      <span class="nav-icon">◎</span> Configurações
+    </div>
+    <div class="nav-item" onclick="viewBlog()">
+      <span class="nav-icon">↗</span> Ver Blog
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user-avatar">A</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">Administrador</div>
+        <div class="sidebar-user-role">Super Admin</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()" title="Sair">⏻</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-actions">
+        <button class="btn-secondary" onclick="showToast('Blog sincronizado!', '✓')">⟳ Sincronizar</button>
+        <button class="btn-primary" onclick="goTo('new-post', document.querySelector('.nav-item:nth-child(4)'))">✦ Novo Post</button>
+      </div>
+    </div>
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-icon">◧</div>
+          <div class="stat-card-label">Total de Posts</div>
+          <div class="stat-card-num" id="dash-total">8</div>
+          <div class="stat-card-delta">↑ +2 este mês</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">◉</div>
+          <div class="stat-card-label">Publicados</div>
+          <div class="stat-card-num" id="dash-published" style="color:var(--success)">5</div>
+          <div class="stat-card-delta">↑ 62% do total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">◈</div>
+          <div class="stat-card-label">Rascunhos</div>
+          <div class="stat-card-num" id="dash-drafts" style="color:var(--warning)">3</div>
+          <div class="stat-card-delta" style="color:var(--muted)">Aguardando revisão</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">▦</div>
+          <div class="stat-card-label">Categorias</div>
+          <div class="stat-card-num">6</div>
+          <div class="stat-card-delta" style="color:var(--muted)">Ativas no blog</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Atividade de Posts (últimos 7 dias)</div>
+            </div>
+            <div class="chart-bar-row" id="chart-bars"></div>
+            <div class="chart-labels" id="chart-labels"></div>
+          </div>
+
+          <div class="panel" style="margin-top:20px;">
+            <div class="panel-header">
+              <div class="panel-title">Posts Recentes</div>
+              <button class="btn-secondary" onclick="goTo('posts', document.querySelectorAll('.nav-item')[1])" style="font-size:11px;padding:6px 12px;">Ver todos →</button>
+            </div>
+            <div style="padding: 0 24px;" id="recent-posts-list"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Atividade</div>
+            </div>
+            <div style="padding: 0 24px;" id="activity-log"></div>
+          </div>
+
+          <div class="panel" style="margin-top:20px;">
+            <div class="panel-header">
+              <div class="panel-title">Posts por Categoria</div>
+            </div>
+            <div style="padding:16px 24px;" id="cat-breakdown"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── POSTS LIST ── -->
+    <div class="page" id="page-posts">
+      <div class="posts-toolbar">
+        <input class="search-input" type="text" placeholder="🔍  Buscar posts..." id="search-posts" oninput="filterPosts()">
+        <select class="filter-select" id="filter-cat" onchange="filterPosts()">
+          <option value="">Todas as categorias</option>
+          <option>Reviews</option>
+          <option>Segurança</option>
+          <option>Custom</option>
+          <option>Rotas</option>
+          <option>Mecânica</option>
+          <option>Eventos</option>
+        </select>
+        <select class="filter-select" id="filter-status" onchange="filterPosts()">
+          <option value="">Todos os status</option>
+          <option>Publicado</option>
+          <option>Rascunho</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table id="posts-table">
+          <thead>
+            <tr>
+              <th>Imagem</th>
+              <th>Título</th>
+              <th>Categoria</th>
+              <th>Autor</th>
+              <th>Data</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="posts-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- ── NEW / EDIT POST ── -->
+    <div class="page" id="page-new-post">
+      <div class="editor-layout">
+        <div class="editor-main">
+          <div class="form-group">
+            <label class="form-label">Título do Post</label>
+            <input class="form-input title-input" type="text" id="ed-title" placeholder="TÍTULO DO ARTIGO EM MAIÚSCULAS...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Resumo / Excerpt</label>
+            <input class="form-input" type="text" id="ed-excerpt" placeholder="Breve descrição exibida nas listagens...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Conteúdo</label>
+            <textarea class="form-textarea" id="ed-content" placeholder="Escreva o conteúdo completo do artigo aqui. Suporte a Markdown..."></textarea>
+          </div>
+        </div>
+        <div class="editor-sidebar">
+          <div class="panel" style="padding:20px;">
+            <div class="form-group">
+              <label class="form-label">Publicação</label>
+              <select class="form-select" id="ed-status">
+                <option>Rascunho</option>
+                <option>Publicado</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <button class="btn-primary" style="flex:1;justify-content:center;" onclick="savePost()">✓ Salvar</button>
+              <button class="btn-secondary" onclick="savePost(true)">▶</button>
+            </div>
+          </div>
+
+          <div class="panel" style="padding:20px;">
+            <div class="form-group">
+              <label class="form-label">Imagem Destaque</label>
+              <div id="img-preview-wrap">
+                <div class="img-placeholder" onclick="setImageUrl()">
+                  <span>🖼</span>
+                  Clique para definir URL da imagem
+                </div>
+              </div>
+              <input class="form-input" type="text" id="ed-img" placeholder="https://..." style="margin-top:8px;" oninput="previewImg(this.value)">
+            </div>
+          </div>
+
+          <div class="panel" style="padding:20px;">
+            <div class="form-group">
+              <label class="form-label">Categoria</label>
+              <select class="form-select" id="ed-cat">
+                <option>Reviews</option>
+                <option>Segurança</option>
+                <option>Custom</option>
+                <option>Rotas</option>
+                <option>Mecânica</option>
+                <option>Eventos</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+              <label class="form-label">Autor</label>
+              <input class="form-input" type="text" id="ed-author" placeholder="Nome do autor" value="Administrador">
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+              <label class="form-label">Tempo de Leitura (min)</label>
+              <input class="form-input" type="number" id="ed-time" value="5" min="1" max="60">
+            </div>
+          </div>
+
+          <div class="panel" style="padding:20px;" id="ed-delete-section" style="display:none;">
+            <button class="btn-danger" style="width:100%;" onclick="confirmDeleteCurrentPost()">✕ Excluir este Post</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CATEGORIES ── -->
+    <div class="page" id="page-categories">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
+        <button class="btn-primary" onclick="openCatModal()">✦ Nova Categoria</button>
+      </div>
+      <div class="cats-grid" id="cats-grid"></div>
+    </div>
+
+    <!-- ── MEDIA ── -->
+    <div class="page" id="page-media">
+      <div class="empty-state">
+        <div class="empty-state-icon">◉</div>
+        <div class="empty-state-title">Biblioteca de Mídia</div>
+        <div class="empty-state-text" style="margin-bottom:20px;">Use URLs de imagens externas (Unsplash, CDN, etc) nos posts.</div>
+        <div style="max-width:500px;margin:0 auto;">
+          <div class="form-group">
+            <label class="form-label">Testar URL de Imagem</label>
+            <div style="display:flex;gap:8px;">
+              <input class="form-input" type="text" id="media-url-test" placeholder="https://images.unsplash.com/...">
+              <button class="btn-primary" onclick="testMedia()">Testar</button>
+            </div>
+          </div>
+          <div id="media-preview" style="margin-top:16px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="page" id="page-settings">
+      <div class="settings-grid">
+        <div class="settings-section">
+          <div class="settings-section-title">Informações do Blog</div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Nome do Blog</label>
+            <input class="form-input" type="text" value="THROTTLE" id="set-name">
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Tagline</label>
+            <input class="form-input" type="text" value="O maior blog de motociclismo do Brasil" id="set-tagline">
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Texto da Barra Superior</label>
+            <input class="form-input" type="text" value="🏍️ Nova edição disponível — Review Honda CB 1000R 2025" id="set-topbar">
+          </div>
+          <div class="form-group" style="margin-bottom:20px;">
+            <label class="form-label">URL do Blog</label>
+            <input class="form-input" type="text" value="https://throttle.com.br" id="set-url">
+          </div>
+          <button class="btn-primary" onclick="saveSettings()">✓ Salvar Configurações</button>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Funcionalidades</div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Newsletter ativa</div>
+              <div class="toggle-desc">Exibir formulário de inscrição</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Comentários</div>
+              <div class="toggle-desc">Permitir comentários nos posts</div>
+            </div>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Modo manutenção</div>
+              <div class="toggle-desc">Blog visível apenas para admin</div>
+            </div>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Ticker de notícias</div>
+              <div class="toggle-desc">Barra animada no topo</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Posts em destaque</div>
+              <div class="toggle-desc">Seção hero na página inicial</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Credenciais de Acesso</div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Usuário Admin</label>
+            <input class="form-input" type="text" value="admin" id="set-admin-user">
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Nova Senha</label>
+            <input class="form-input" type="password" placeholder="••••••••" id="set-admin-pass">
+          </div>
+          <div class="form-group" style="margin-bottom:20px;">
+            <label class="form-label">Confirmar Senha</label>
+            <input class="form-input" type="password" placeholder="••••••••" id="set-admin-pass2">
+          </div>
+          <button class="btn-primary" onclick="changePassword()">✓ Alterar Senha</button>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Redes Sociais</div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Instagram</label>
+            <input class="form-input" type="text" placeholder="@throttle_moto" id="set-ig">
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">YouTube</label>
+            <input class="form-input" type="text" placeholder="youtube.com/throttle" id="set-yt">
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">X (Twitter)</label>
+            <input class="form-input" type="text" placeholder="@throttle_br" id="set-tw">
+          </div>
+          <div class="form-group" style="margin-bottom:20px;">
+            <label class="form-label">LinkedIn</label>
+            <input class="form-input" type="text" placeholder="linkedin.com/company/throttle" id="set-li">
+          </div>
+          <button class="btn-primary" onclick="showToast('Redes sociais salvas!', '✓')">✓ Salvar Redes</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main-content -->
+</div><!-- end admin-shell -->
+
+<!-- MODAL: Delete -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--red)">⚠ Confirmar Exclusão</div>
+    <p style="font-size:14px;color:var(--muted);line-height:1.6;">Tem certeza que deseja excluir o post <strong id="modal-delete-title" style="color:var(--white)"></strong>? Esta ação não pode ser desfeita.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('modal-delete')">Cancelar</button>
+      <button class="btn-primary" style="background:var(--red-dark);" onclick="deletePost()">✕ Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Category -->
+<div class="modal-overlay" id="modal-cat">
+  <div class="modal">
+    <div class="modal-title">Nova Categoria</div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Nome</label>
+      <input class="form-input" type="text" id="cat-name-input" placeholder="Ex: Trail">
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">URL da Imagem</label>
+      <input class="form-input" type="text" id="cat-img-input" placeholder="https://images.unsplash.com/...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('modal-cat')">Cancelar</button>
+      <button class="btn-primary" onclick="addCategory()">✦ Criar Categoria</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon">✓</span>
+  <span id="toast-msg">Operação realizada!</span>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA STORE
+// ═══════════════════════════════════════
+let posts = [
+  { id: 1, title: 'Honda CB 750 Hornet 2025: O Naked que Todos Esperavam', excerpt: 'A nova CB 750 chega para redefinir o segmento naked médio no Brasil com tecnologia e design arrasador.', content: 'Texto completo do artigo...', cat: 'Reviews', author: 'Carlos Mendes', status: 'Publicado', date: '10 Mai 2025', img: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400&q=70', time: 8 },
+  { id: 2, title: 'Guia Completo de Segurança para Motociclistas Iniciantes', excerpt: 'Os equipamentos e técnicas que podem salvar sua vida nas primeiras semanas de moto.', content: '', cat: 'Segurança', author: 'Ana Souza', status: 'Publicado', date: '08 Mai 2025', img: 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&q=70', time: 12 },
+  { id: 3, title: '5 Roteiros Imperdíveis no Sul do Brasil de Moto', excerpt: 'Da Serra Gaúcha ao Litoral Catarinense, os percursos que vão marcar sua memória.', content: '', cat: 'Rotas', author: 'Juliana Pires', status: 'Publicado', date: '06 Mai 2025', img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=70', time: 9 },
+  { id: 4, title: 'Yamaha NMAX 160 2025: Vale o Investimento?', excerpt: 'Testamos a nova NMAX em cidade e estrada para dar o veredicto definitivo.', content: '', cat: 'Reviews', author: 'Pedro Lima', status: 'Publicado', date: '05 Mai 2025', img: 'https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?w=400&q=70', time: 11 },
+  { id: 5, title: 'Bobber em Casa: Transformando uma CG 160', excerpt: 'Acompanhe o processo completo de customização de uma CG comum em uma Bobber estilosa.', content: '', cat: 'Custom', author: 'Rafael Torres', status: 'Publicado', date: '28 Abr 2025', img: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&q=70', time: 15 },
+  { id: 6, title: 'Kawasaki Z900 vs Yamaha MT-09: A Batalha das Nua das Naked Médias', excerpt: 'Duelo técnico entre dois dos melhores naked do mercado nacional.', content: '', cat: 'Reviews', author: 'Carlos Mendes', status: 'Rascunho', date: '25 Abr 2025', img: 'https://images.unsplash.com/photo-1558981359-219d6364c9c8?w=400&q=70', time: 10 },
+  { id: 7, title: 'Como Fazer a Manutenção Básica da Sua Moto em Casa', excerpt: 'Aprenda a trocar óleo, filtros e ajustar a corrente sem ir à oficina.', content: '', cat: 'Mecânica', author: 'Ana Souza', status: 'Rascunho', date: '20 Abr 2025', img: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400&q=70', time: 7 },
+  { id: 8, title: 'Moto Elétrica Zero SR/S: O Futuro Chegou ao Brasil', excerpt: 'Dirigimos a mais avançada elétrica disponível no Brasil e ficamos impressionados.', content: '', cat: 'Reviews', author: 'Juliana Pires', status: 'Rascunho', date: '15 Abr 2025', img: 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&q=70', time: 13 },
+];
+
+let categories = [
+  { id: 1, name: 'Reviews', count: 48, img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=70' },
+  { id: 2, name: 'Segurança', count: 32, img: 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&q=70' },
+  { id: 3, name: 'Custom', count: 27, img: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&q=70' },
+  { id: 4, name: 'Rotas', count: 61, img: 'https://images.unsplash.com/photo-1558981359-219d6364c9c8?w=400&q=70' },
+  { id: 5, name: 'Mecânica', count: 19, img: 'https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?w=400&q=70' },
+  { id: 6, name: 'Eventos', count: 14, img: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400&q=70' },
+];
+
+let settings = { user: 'admin', pass: 'throttle2025' };
+let editingPostId = null;
+let deletingPostId = null;
+let nextId = 9;
+let currentPage = 1;
+const PER_PAGE = 6;
+
+// ═══════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('login-user').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  if (u === settings.user && p === settings.pass) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('admin-shell').classList.add('visible');
+    renderDashboard();
+  } else {
+    document.getElementById('login-error').classList.add('show');
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-pass').focus();
+  }
+}
+
+function doLogout() {
+  document.getElementById('admin-shell').classList.remove('visible');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').classList.remove('show');
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function goTo(page, el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+
+  const titles = {
+    'dashboard': 'Dashboard', 'posts': 'Gerenciar Posts',
+    'new-post': editingPostId ? 'Editar Post' : 'Novo Post',
+    'categories': 'Categorias', 'media': 'Mídia', 'settings': 'Configurações'
+  };
+  document.getElementById('page-title').textContent = titles[page] || page;
+
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'posts') renderPostsTable();
+  if (page === 'categories') renderCategories();
+  if (page === 'new-post' && !editingPostId) clearEditor();
+}
+
+function viewBlog() {
+  showToast('Abrindo blog (demonstração)...', '↗');
+}
+
+// ═══════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════
+function renderDashboard() {
+  const pub = posts.filter(p => p.status === 'Publicado').length;
+  const draft = posts.filter(p => p.status === 'Rascunho').length;
+  document.getElementById('dash-total').textContent = posts.length;
+  document.getElementById('dash-published').textContent = pub;
+  document.getElementById('dash-drafts').textContent = draft;
+  document.getElementById('posts-count-badge').textContent = posts.length;
+
+  // Chart
+  const days = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  const vals = [2,1,3,1,2,0,1];
+  const max = Math.max(...vals);
+  document.getElementById('chart-bars').innerHTML = vals.map((v,i) =>
+    `<div class="chart-bar" style="height:${max ? (v/max)*100 : 10}%" title="${v} posts"></div>`
+  ).join('');
+  document.getElementById('chart-labels').innerHTML = days.map(d =>
+    `<div class="chart-label">${d}</div>`
+  ).join('');
+
+  // Recent posts
+  document.getElementById('recent-posts-list').innerHTML = posts.slice(0,4).map(p => `
+    <div class="recent-item">
+      <img class="recent-thumb" src="${p.img}" alt="" onerror="this.style.background='#222';this.src=''">
+      <div class="recent-info">
+        <div class="recent-title">${p.title}</div>
+        <div class="recent-meta"><span class="cat-tag">${p.cat}</span> &nbsp; ${p.date}</div>
+      </div>
+      <span class="status-badge status-${p.status === 'Publicado' ? 'published' : 'draft'}">${p.status}</span>
+    </div>
+  `).join('');
+
+  // Activity log
+  const acts = [
+    { text: 'Post "Honda CB 750" publicado', time: '2h atrás' },
+    { text: 'Rascunho "Z900 vs MT-09" salvo', time: '5h atrás' },
+    { text: 'Categoria "Eventos" atualizada', time: 'Ontem' },
+    { text: 'Post "Roteiros Sul" publicado', time: 'Ontem' },
+    { text: 'Configurações do blog salvas', time: '3 dias atrás' },
+  ];
+  document.getElementById('activity-log').innerHTML = acts.map(a => `
+    <div class="activity-item">
+      <div class="activity-dot"></div>
+      <div><div>${a.text}</div><div class="activity-time">${a.time}</div></div>
+    </div>
+  `).join('');
+
+  // Category breakdown
+  const catCounts = {};
+  posts.forEach(p => catCounts[p.cat] = (catCounts[p.cat] || 0) + 1);
+  document.getElementById('cat-breakdown').innerHTML = Object.entries(catCounts).map(([cat, n]) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      <span class="cat-tag">${cat}</span>
+      <span style="color:var(--muted);">${n} posts</span>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════
+// POSTS TABLE
+// ═══════════════════════════════════════
+function filterPosts() {
+  currentPage = 1;
+  renderPostsTable();
+}
+
+function getFilteredPosts() {
+  const q = document.getElementById('search-posts').value.toLowerCase();
+  const cat = document.getElementById('filter-cat').value;
+  const status = document.getElementById('filter-status').value;
+  return posts.filter(p =>
+    (!q || p.title.toLowerCase().includes(q) || p.author.toLowerCase().includes(q)) &&
+    (!cat || p.cat === cat) &&
+    (!status || p.status === status)
+  );
+}
+
+function renderPostsTable() {
+  const filtered = getFilteredPosts();
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / PER_PAGE);
+  const slice = filtered.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
+
+  const tbody = document.getElementById('posts-tbody');
+  if (slice.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="padding:40px 0;"><div class="empty-state-icon">◧</div><div class="empty-state-title">Nenhum post encontrado</div></div></td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map(p => `
+      <tr>
+        <td><img class="post-thumb" src="${p.img}" onerror="this.style.background='#333';this.src=''" alt=""></td>
+        <td style="max-width:260px;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;line-height:1.2;">${p.title}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">${p.excerpt.slice(0,60)}...</div>
+        </td>
+        <td><span class="cat-tag">${p.cat}</span></td>
+        <td style="font-size:12px;color:var(--muted)">${p.author}</td>
+        <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${p.date}</td>
+        <td><span class="status-badge status-${p.status==='Publicado'?'published':'draft'}">${p.status}</span></td>
+        <td>
+          <div class="table-actions">
+            <button class="tbl-btn" onclick="editPost(${p.id})">✏ Editar</button>
+            <button class="tbl-btn del" onclick="openDeleteModal(${p.id})">✕</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // Pagination
+  const pg = document.getElementById('pagination');
+  pg.innerHTML = '';
+  if (totalPages > 1) {
+    for (let i = 1; i <= totalPages; i++) {
+      pg.innerHTML += `<div class="page-btn ${i===currentPage?'active':''}" onclick="changePage(${i})">${i}</div>`;
+    }
+  }
+}
+
+function changePage(n) {
+  currentPage = n;
+  renderPostsTable();
+}
+
+// ═══════════════════════════════════════
+// EDITOR
+// ═══════════════════════════════════════
+function clearEditor() {
+  editingPostId = null;
+  document.getElementById('ed-title').value = '';
+  document.getElementById('ed-excerpt').value = '';
+  document.getElementById('ed-content').value = '';
+  document.getElementById('ed-img').value = '';
+  document.getElementById('ed-status').value = 'Rascunho';
+  document.getElementById('ed-cat').value = 'Reviews';
+  document.getElementById('ed-author').value = 'Administrador';
+  document.getElementById('ed-time').value = '5';
+  document.getElementById('img-preview-wrap').innerHTML = `<div class="img-placeholder" onclick="setImageUrl()"><span>🖼</span>Clique para definir URL da imagem</div>`;
+  document.getElementById('ed-delete-section').style.display = 'none';
+}
+
+function editPost(id) {
+  const p = posts.find(x => x.id === id);
+  if (!p) return;
+  editingPostId = id;
+  document.getElementById('ed-title').value = p.title;
+  document.getElementById('ed-excerpt').value = p.excerpt;
+  document.getElementById('ed-content').value = p.content;
+  document.getElementById('ed-img').value = p.img;
+  document.getElementById('ed-status').value = p.status;
+  document.getElementById('ed-cat').value = p.cat;
+  document.getElementById('ed-author').value = p.author;
+  document.getElementById('ed-time').value = p.time;
+  previewImg(p.img);
+  document.getElementById('ed-delete-section').style.display = 'block';
+  goTo('new-post', document.querySelectorAll('.nav-item')[2]);
+}
+
+function previewImg(url) {
+  const wrap = document.getElementById('img-preview-wrap');
+  if (url && url.startsWith('http')) {
+    wrap.innerHTML = `<img class="img-preview" src="${url}" onerror="this.parentElement.innerHTML='<div class=img-placeholder onclick=setImageUrl()><span>⚠</span>URL inválida</div>'">`;
+  } else {
+    wrap.innerHTML = `<div class="img-placeholder" onclick="setImageUrl()"><span>🖼</span>Clique para definir URL da imagem</div>`;
+  }
+}
+
+function setImageUrl() {
+  const url = prompt('Cole a URL da imagem (ex: https://images.unsplash.com/...):');
+  if (url) {
+    document.getElementById('ed-img').value = url;
+    previewImg(url);
+  }
+}
+
+function savePost(publish = false) {
+  const title = document.getElementById('ed-title').value.trim();
+  if (!title) { showToast('Informe o título do post!', '⚠', true); return; }
+
+  const data = {
+    title,
+    excerpt: document.getElementById('ed-excerpt').value.trim() || 'Sem descrição.',
+    content: document.getElementById('ed-content').value,
+    img: document.getElementById('ed-img').value || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400&q=70',
+    status: publish ? 'Publicado' : document.getElementById('ed-status').value,
+    cat: document.getElementById('ed-cat').value,
+    author: document.getElementById('ed-author').value || 'Admin',
+    time: parseInt(document.getElementById('ed-time').value) || 5,
+    date: new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' }).replace('.',''),
+  };
+
+  if (editingPostId) {
+    const idx = posts.findIndex(p => p.id === editingPostId);
+    posts[idx] = { ...posts[idx], ...data };
+    showToast('Post atualizado com sucesso!', '✓');
+  } else {
+    posts.unshift({ id: nextId++, ...data });
+    showToast(publish ? 'Post publicado!' : 'Rascunho salvo!', '✓');
+    editingPostId = posts[0].id;
+    document.getElementById('ed-delete-section').style.display = 'block';
+  }
+  document.getElementById('page-title').textContent = 'Editar Post';
+  document.getElementById('posts-count-badge').textContent = posts.length;
+}
+
+// ═══════════════════════════════════════
+// DELETE
+// ═══════════════════════════════════════
+function openDeleteModal(id) {
+  const p = posts.find(x => x.id === id);
+  deletingPostId = id;
+  document.getElementById('modal-delete-title').textContent = p.title;
+  document.getElementById('modal-delete').classList.add('open');
+}
+
+function confirmDeleteCurrentPost() {
+  if (editingPostId) openDeleteModal(editingPostId);
+}
+
+function deletePost() {
+  posts = posts.filter(p => p.id !== deletingPostId);
+  if (editingPostId === deletingPostId) {
+    editingPostId = null;
+    clearEditor();
+    goTo('posts', document.querySelectorAll('.nav-item')[1]);
+  }
+  closeModal('modal-delete');
+  showToast('Post excluído.', '✕', true);
+  document.getElementById('posts-count-badge').textContent = posts.length;
+  renderPostsTable();
+}
+
+// ═══════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════
+function renderCategories() {
+  document.getElementById('cats-grid').innerHTML = categories.map(c => `
+    <div class="cat-card-admin">
+      <img class="cat-card-img" src="${c.img}" alt="${c.name}" onerror="this.style.background='#222';this.src=''">
+      <div class="cat-card-body">
+        <div class="cat-card-name">${c.name}</div>
+        <div class="cat-card-count">${c.count} artigos</div>
+        <div class="cat-card-actions">
+          <button class="tbl-btn" onclick="editCategory(${c.id})">✏ Editar</button>
+          <button class="tbl-btn del" onclick="deleteCategory(${c.id})">✕</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openCatModal() {
+  document.getElementById('cat-name-input').value = '';
+  document.getElementById('cat-img-input').value = '';
+  document.getElementById('modal-cat').classList.add('open');
+}
+
+function addCategory() {
+  const name = document.getElementById('cat-name-input').value.trim();
+  if (!name) { showToast('Informe o nome da categoria!', '⚠', true); return; }
+  const img = document.getElementById('cat-img-input').value || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400&q=70';
+  categories.push({ id: Date.now(), name, count: 0, img });
+  // Update selects
+  const opt = document.createElement('option');
+  opt.textContent = name;
+  ['ed-cat','filter-cat'].forEach(id => document.getElementById(id).appendChild(opt.cloneNode(true)));
+  closeModal('modal-cat');
+  renderCategories();
+  showToast(`Categoria "${name}" criada!`, '✦');
+}
+
+function editCategory(id) {
+  const c = categories.find(x => x.id === id);
+  const newName = prompt('Nome da categoria:', c.name);
+  if (newName && newName.trim()) { c.name = newName.trim(); renderCategories(); showToast('Categoria atualizada!', '✓'); }
+}
+
+function deleteCategory(id) {
+  if (!confirm('Excluir esta categoria?')) return;
+  categories = categories.filter(c => c.id !== id);
+  renderCategories();
+  showToast('Categoria removida.', '✕', true);
+}
+
+// ═══════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════
+function saveSettings() {
+  showToast('Configurações salvas com sucesso!', '✓');
+}
+
+function changePassword() {
+  const u = document.getElementById('set-admin-user').value.trim();
+  const p = document.getElementById('set-admin-pass').value;
+  const p2 = document.getElementById('set-admin-pass2').value;
+  if (!u) { showToast('Informe o usuário!', '⚠', true); return; }
+  if (p && p !== p2) { showToast('As senhas não coincidem!', '⚠', true); return; }
+  if (u) settings.user = u;
+  if (p) settings.pass = p;
+  document.getElementById('set-admin-pass').value = '';
+  document.getElementById('set-admin-pass2').value = '';
+  showToast('Credenciais atualizadas!', '✓');
+}
+
+// ═══════════════════════════════════════
+// MEDIA TEST
+// ═══════════════════════════════════════
+function testMedia() {
+  const url = document.getElementById('media-url-test').value;
+  const wrap = document.getElementById('media-preview');
+  if (!url) return;
+  wrap.innerHTML = `<img src="${url}" style="max-width:100%;border:1px solid var(--border);display:block;" onerror="this.parentElement.innerHTML='<p style=color:var(--red);font-size:13px;>⚠ URL inválida ou inacessível</p>'">`;
+}
+
+// ═══════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(mo => {
+  mo.addEventListener('click', e => { if (e.target === mo) closeModal(mo.id); });
+});
+
+let toastTimer;
+function showToast(msg, icon = '✓', isError = false) {
+  const t = document.getElementById('toast');
+  const i = document.getElementById('toast-icon');
+  document.getElementById('toast-msg').textContent = msg;
+  i.textContent = icon;
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Enter key in login
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+});
+</script>
+</body>
+</html>

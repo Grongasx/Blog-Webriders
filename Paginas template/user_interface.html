@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THROTTLE — Blog de Motociclismo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,900&family=Barlow:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e81a1a;
+    --red-dark: #a80f0f;
+    --red-glow: rgba(232,26,26,0.35);
+    --black: #0a0a0a;
+    --dark: #111111;
+    --card: #181818;
+    --border: rgba(255,255,255,0.07);
+    --text: #e0e0e0;
+    --muted: #888;
+    --white: #ffffff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--black);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--red); border-radius: 2px; }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.4;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--red);
+    text-align: center;
+    padding: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,10,0.97);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px;
+    height: 68px;
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 3px;
+    color: var(--white);
+    text-decoration: none;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .nav-logo span { color: var(--red); }
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: var(--red);
+    clip-path: polygon(20% 0%, 80% 0%, 100% 50%, 80% 100%, 20% 100%, 0% 50%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .nav-links {
+    display: flex; gap: 32px; list-style: none;
+  }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: color .2s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute; bottom: -4px; left: 0;
+    width: 0; height: 2px;
+    background: var(--red);
+    transition: width .25s;
+  }
+  .nav-links a:hover { color: var(--white); }
+  .nav-links a:hover::after { width: 100%; }
+
+  .nav-cta {
+    background: var(--red);
+    color: var(--white) !important;
+    padding: 8px 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 2px;
+    border: none; cursor: pointer;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background .2s;
+  }
+  .nav-cta:hover { background: var(--red-dark) !important; }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 92vh;
+    display: flex; align-items: flex-end;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(135deg, rgba(232,26,26,0.15) 0%, transparent 50%),
+      linear-gradient(to top, rgba(10,10,10,1) 0%, rgba(10,10,10,0.5) 40%, rgba(10,10,10,0.1) 100%),
+      url('https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=1600&q=80') center/cover no-repeat;
+    transform: scale(1.05);
+    animation: heroZoom 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes heroZoom {
+    from { transform: scale(1.05); }
+    to { transform: scale(1.12); }
+  }
+
+  .hero-diagonal {
+    position: absolute; bottom: -1px; left: 0; right: 0;
+    height: 120px;
+    background: var(--black);
+    clip-path: polygon(0 60%, 100% 0%, 100% 100%, 0% 100%);
+  }
+
+  .hero-badge {
+    position: absolute; top: 50px; right: 60px;
+    width: 110px; height: 110px;
+    background: var(--red);
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    animation: spin 20s linear infinite;
+  }
+  .hero-badge-inner {
+    text-align: center;
+    animation: spinReverse 20s linear infinite;
+  }
+  .hero-badge-inner .num { font-size: 28px; line-height: 1; }
+  .hero-badge-inner .txt { font-size: 10px; letter-spacing: 1px; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spinReverse { to { transform: rotate(-360deg); } }
+
+  .hero-content {
+    position: relative; z-index: 2;
+    padding: 0 60px 90px;
+    max-width: 820px;
+  }
+
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--red);
+    padding: 5px 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  .hero-tag::before {
+    content: '▶';
+    font-size: 8px;
+  }
+
+  .hero-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: clamp(60px, 9vw, 110px);
+    line-height: 0.9;
+    text-transform: uppercase;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+  }
+  .hero-title em {
+    color: var(--red);
+    font-style: italic;
+    -webkit-text-stroke: 0px;
+  }
+  .hero-title .outline {
+    -webkit-text-stroke: 1px rgba(255,255,255,0.3);
+    color: transparent;
+  }
+
+  .hero-desc {
+    font-size: 16px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.7;
+    max-width: 480px;
+    margin-bottom: 36px;
+  }
+
+  .hero-actions {
+    display: flex; gap: 16px; align-items: center;
+  }
+
+  .btn-primary {
+    background: var(--red);
+    color: var(--white);
+    padding: 14px 34px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: none; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 10px;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+    transition: background .2s, transform .2s;
+  }
+  .btn-primary:hover { background: var(--red-dark); transform: translateY(-2px); }
+
+  .btn-ghost {
+    color: var(--white);
+    padding: 14px 34px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: border-color .2s, color .2s;
+  }
+  .btn-ghost:hover { border-color: var(--red); color: var(--red); }
+
+  .hero-scroll {
+    position: absolute; bottom: 130px; right: 60px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .hero-scroll::after {
+    content: '';
+    width: 1px; height: 60px;
+    background: linear-gradient(to bottom, var(--red), transparent);
+    animation: scrollLine 1.5s ease-in-out infinite;
+  }
+  @keyframes scrollLine {
+    0%,100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  /* ── SECTION HEADERS ── */
+  .section-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 40px;
+  }
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-label::before {
+    content: '';
+    width: 24px; height: 2px;
+    background: var(--red);
+  }
+  .section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: clamp(36px, 5vw, 58px);
+    text-transform: uppercase;
+    line-height: 0.95;
+    letter-spacing: -1px;
+  }
+  .see-all {
+    color: var(--muted);
+    text-decoration: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+    transition: color .2s;
+    padding-bottom: 4px;
+  }
+  .see-all::after { content: '→'; transition: transform .2s; }
+  .see-all:hover { color: var(--red); }
+  .see-all:hover::after { transform: translateX(4px); }
+
+  /* ── CONTAINER ── */
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  section { padding: 80px 0; }
+
+  /* ── FEATURED GRID ── */
+  .featured-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 20px;
+  }
+
+  .post-card {
+    position: relative;
+    overflow: hidden;
+    background: var(--card);
+    cursor: pointer;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+  .post-card:hover .card-img { transform: scale(1.06); }
+  .post-card:hover .card-title { color: var(--red); }
+
+  .post-card.large { grid-row: 1 / 3; }
+
+  .card-img-wrap {
+    overflow: hidden;
+    position: relative;
+  }
+  .card-img-wrap::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.4) 50%, transparent 100%);
+  }
+  .large .card-img-wrap { height: 100%; min-height: 560px; }
+  .small .card-img-wrap { height: 260px; }
+
+  .card-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
+    display: block;
+  }
+
+  .card-body {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 28px;
+    z-index: 2;
+  }
+
+  .card-category {
+    display: inline-block;
+    background: var(--red);
+    padding: 4px 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    line-height: 1.05;
+    transition: color .2s;
+  }
+  .large .card-title { font-size: 38px; margin-bottom: 14px; }
+  .small .card-title { font-size: 22px; margin-bottom: 8px; }
+
+  .card-meta {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+  }
+  .card-meta .sep { color: var(--red); }
+
+  .large .card-excerpt {
+    font-size: 15px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.6;
+    margin-bottom: 16px;
+    max-width: 420px;
+  }
+
+  /* ── TICKER ── */
+  .ticker-wrap {
+    background: var(--red);
+    overflow: hidden;
+    padding: 12px 0;
+    display: flex;
+  }
+  .ticker {
+    display: flex; gap: 0;
+    animation: ticker 25s linear infinite;
+    white-space: nowrap;
+  }
+  .ticker-item {
+    display: inline-flex; align-items: center; gap: 18px;
+    padding: 0 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .ticker-item::after {
+    content: '✦';
+    color: rgba(255,255,255,0.5);
+    font-size: 10px;
+  }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ── STATS ── */
+  .stats-section {
+    padding: 50px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+  .stat-item {
+    background: var(--black);
+    padding: 40px 30px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-item::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--red);
+    transform: scaleX(0);
+    transition: transform 0.4s;
+  }
+  .stat-item:hover::before { transform: scaleX(1); }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    line-height: 1;
+    color: var(--white);
+    display: block;
+    letter-spacing: -1px;
+  }
+  .stat-num span { color: var(--red); }
+  .stat-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* ── LATEST POSTS ── */
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .article-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: border-color .3s, transform .3s;
+  }
+  .article-card:hover {
+    border-color: var(--red);
+    transform: translateY(-4px);
+  }
+  .article-card:hover .article-img { transform: scale(1.06); }
+  .article-card:hover .article-title { color: var(--red); }
+
+  .article-img-wrap {
+    height: 220px;
+    overflow: hidden;
+    position: relative;
+  }
+  .article-img-wrap::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(10,10,10,0.7), transparent 50%);
+  }
+  .article-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    display: block;
+  }
+
+  .article-cat {
+    position: absolute; bottom: 14px; left: 14px; z-index: 2;
+    background: var(--red);
+    padding: 3px 9px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .article-body { padding: 22px 22px 26px; }
+
+  .article-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 22px;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin-bottom: 10px;
+    transition: color .2s;
+  }
+  .article-excerpt {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .article-meta {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+  .article-author-img {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--red);
+  }
+  .article-read-time { margin-left: auto; color: var(--red); }
+
+  /* ── QUOTE BREAK ── */
+  .quote-section {
+    padding: 80px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .quote-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(135deg, rgba(232,26,26,0.08) 0%, transparent 60%),
+      url('https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=1600&q=80') center/cover no-repeat;
+    opacity: 0.25;
+  }
+  .quote-section::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, var(--black) 0%, rgba(10,10,10,0.7) 50%, var(--black) 100%);
+  }
+  .quote-content {
+    position: relative; z-index: 2;
+    text-align: center;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+  .quote-mark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 120px;
+    line-height: 0.6;
+    color: var(--red);
+    opacity: 0.4;
+    display: block;
+    margin-bottom: 20px;
+  }
+  .quote-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: clamp(28px, 4vw, 50px);
+    text-transform: uppercase;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 24px;
+  }
+  .quote-text em { color: var(--red); font-style: italic; }
+  .quote-author {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* ── CATEGORIES ── */
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+  .cat-card {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 3/4;
+    text-decoration: none;
+    color: var(--white);
+    display: block;
+  }
+  .cat-card:hover .cat-img { transform: scale(1.1); }
+  .cat-card:hover .cat-overlay { opacity: 0.85; }
+  .cat-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    display: block;
+  }
+  .cat-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(10,10,10,0.95), rgba(232,26,26,0.4) 50%, rgba(10,10,10,0.3));
+    transition: opacity .3s;
+  }
+  .cat-label {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .cat-count {
+    display: block;
+    font-size: 11px;
+    color: var(--red);
+    font-style: normal;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  /* ── NEWSLETTER ── */
+  .newsletter-section {
+    padding: 80px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .newsletter-inner {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .newsletter-inner::before {
+    content: 'NL';
+    position: absolute; right: -20px; top: -20px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 220px;
+    color: rgba(232,26,26,0.04);
+    line-height: 1;
+    pointer-events: none;
+    letter-spacing: -10px;
+  }
+  .newsletter-tag {
+    display: inline-block;
+    background: var(--red);
+    padding: 5px 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .newsletter-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 46px;
+    text-transform: uppercase;
+    line-height: 0.95;
+    letter-spacing: -1px;
+    margin-bottom: 14px;
+  }
+  .newsletter-desc {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .newsletter-form {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .form-input {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 14px 18px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s;
+    width: 100%;
+  }
+  .form-input::placeholder { color: var(--muted); }
+  .form-input:focus { border-color: var(--red); }
+
+  /* ── SIDEBAR POSTS ── */
+  .content-sidebar {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 40px;
+  }
+
+  .sidebar-card {
+    display: flex; gap: 16px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+  }
+  .sidebar-card:last-child { border-bottom: none; }
+  .sidebar-card:hover .sidebar-title { color: var(--red); }
+
+  .sidebar-img {
+    width: 90px; height: 70px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .sidebar-content { flex: 1; }
+  .sidebar-cat {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    display: block;
+  }
+  .sidebar-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 16px;
+    text-transform: uppercase;
+    line-height: 1.15;
+    transition: color .2s;
+    margin-bottom: 6px;
+  }
+  .sidebar-date {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+  }
+
+  .sidebar-widget {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .widget-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 20px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--red);
+  }
+
+  .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .tag:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--dark);
+    border-top: 1px solid var(--border);
+    padding: 60px 0 0;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 50px;
+  }
+  .footer-brand-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 3px;
+    color: var(--white);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .footer-brand-title span { color: var(--red); }
+  .footer-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 24px;
+    max-width: 280px;
+  }
+  .social-links { display: flex; gap: 10px; }
+  .social-link {
+    width: 38px; height: 38px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 14px;
+    transition: all .2s;
+  }
+  .social-link:hover { border-color: var(--red); color: var(--red); background: rgba(232,26,26,0.1); }
+
+  .footer-heading {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    color: var(--white);
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--red);
+    display: inline-block;
+  }
+  .footer-links { list-style: none; }
+  .footer-links li { margin-bottom: 10px; }
+  .footer-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: color .2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .footer-links a::before { content: '›'; color: var(--red); }
+  .footer-links a:hover { color: var(--white); }
+
+  .footer-bottom {
+    border-top: 1px solid var(--border);
+    padding: 20px 0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-bottom p {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+  }
+  .footer-bottom span { color: var(--red); }
+
+  /* ── ANIMATIONS ── */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── VIDEO FEATURE ── */
+  .video-feature {
+    position: relative;
+    height: 440px;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .video-feature-bg {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(to right, rgba(10,10,10,0.9) 0%, rgba(10,10,10,0.5) 50%, rgba(10,10,10,0.9) 100%),
+      url('https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=1600&q=80') center/cover;
+  }
+  .video-play {
+    position: relative; z-index: 2;
+    text-align: center;
+  }
+  .play-btn {
+    width: 80px; height: 80px;
+    border: 2px solid var(--red);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 20px;
+    cursor: pointer;
+    transition: all .3s;
+    animation: pulsePink 2s ease-in-out infinite;
+    text-decoration: none;
+    color: var(--white);
+  }
+  .play-btn:hover { background: var(--red); transform: scale(1.1); }
+  @keyframes pulsePink {
+    0%,100% { box-shadow: 0 0 0 0 rgba(232,26,26,0.4); }
+    50% { box-shadow: 0 0 0 20px rgba(232,26,26,0); }
+  }
+  .video-play-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 38px;
+    text-transform: uppercase;
+  }
+  .video-play-sub {
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .hero-content { padding: 0 24px 80px; }
+    .hero-badge { display: none; }
+    .container { padding: 0 20px; }
+    .featured-grid { grid-template-columns: 1fr; }
+    .post-card.large { grid-row: auto; }
+    .posts-grid { grid-template-columns: 1fr; }
+    .categories-grid { grid-template-columns: repeat(3, 1fr); }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .content-sidebar { grid-template-columns: 1fr; }
+    .newsletter-inner { grid-template-columns: 1fr; padding: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  🏍️ &nbsp; FRETE GRÁTIS ACIMA DE R$799 PARA TODO O BRASIL &nbsp; — &nbsp; NOVA COLEÇÃO INVERNO 2025 DISPONÍVEL
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-icon">⚡</div>
+    THROTTLE<span>.</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#">Início</a></li>
+    <li><a href="#">Reviews</a></li>
+    <li><a href="#">Segurança</a></li>
+    <li><a href="#">Customização</a></li>
+    <li><a href="#">Viagens</a></li>
+    <li><a href="#">Eventos</a></li>
+  </ul>
+  <a href="#newsletter" class="nav-cta">Assinar</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-diagonal"></div>
+  <div class="hero-badge">
+    <div class="hero-badge-inner">
+      <span class="num">2025</span>
+      <span class="txt">Temporada</span>
+    </div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-tag">Destaque da semana</div>
+    <h1 class="hero-title">
+      A Estrada<br>
+      <em>Chama</em><br>
+      <span class="outline">Você Responde?</span>
+    </h1>
+    <p class="hero-desc">
+      Do asfalto molhado às curvas fechadas da serra — mergulhe no universo do motociclismo com quem vive isso todos os dias. Reviews, segurança, customização e as melhores rotas do Brasil.
+    </p>
+    <div class="hero-actions">
+      <a href="#destaques" class="btn-primary">▶ Explorar Conteúdo</a>
+      <a href="#newsletter" class="btn-ghost">Assinar Newsletter</a>
+    </div>
+  </div>
+
+  <div class="hero-scroll">Rolar</div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span class="ticker-item">Review Honda CB 750 Hornet</span>
+    <span class="ticker-item">Top 10 Rotas da Serra Gaúcha</span>
+    <span class="ticker-item">Como escolher seu primeiro capacete</span>
+    <span class="ticker-item">Yamaha MT-09 vs Kawasaki Z900</span>
+    <span class="ticker-item">Temporada de chuvas: dicas de segurança</span>
+    <span class="ticker-item">Moto do Ano 2025: finalistas revelados</span>
+    <span class="ticker-item">Review Honda CB 750 Hornet</span>
+    <span class="ticker-item">Top 10 Rotas da Serra Gaúcha</span>
+    <span class="ticker-item">Como escolher seu primeiro capacete</span>
+    <span class="ticker-item">Yamaha MT-09 vs Kawasaki Z900</span>
+    <span class="ticker-item">Temporada de chuvas: dicas de segurança</span>
+    <span class="ticker-item">Moto do Ano 2025: finalistas revelados</span>
+  </div>
+</div>
+
+<!-- FEATURED POSTS -->
+<section id="destaques">
+  <div class="container">
+    <div class="section-header fade-up">
+      <div>
+        <div class="section-label">Em destaque</div>
+        <h2 class="section-title">Matérias<br>Principais</h2>
+      </div>
+      <a href="#" class="see-all">Ver todos</a>
+    </div>
+
+    <div class="featured-grid fade-up">
+      <!-- Large card -->
+      <a href="#" class="post-card large">
+        <div class="card-img-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=80" alt="Moto na estrada">
+        </div>
+        <div class="card-body">
+          <span class="card-category">Review Exclusivo</span>
+          <h3 class="card-title">Honda CB 750 Hornet: A Naked que<br>Redefiniu o Segmento em 2025</h3>
+          <p class="card-excerpt">Testamos por 3.000 km nas estradas mais desafiadoras do Brasil. Do conforto urbano à emoção das curvas, descubra se a nova Hornet cumpre tudo que promete.</p>
+          <div class="card-meta">
+            <span>Por Rafael Mota</span>
+            <span class="sep">•</span>
+            <span>12 Mai 2025</span>
+            <span class="sep">•</span>
+            <span>8 min de leitura</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Small card 1 -->
+      <a href="#" class="post-card small">
+        <div class="card-img-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=700&q=80" alt="Capacete">
+        </div>
+        <div class="card-body">
+          <span class="card-category">Equipamentos</span>
+          <h3 class="card-title">Os 5 Capacetes Mais Seguros do Mercado Brasileiro</h3>
+          <div class="card-meta">
+            <span>Ana Vidal</span>
+            <span class="sep">•</span>
+            <span>10 Mai 2025</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Small card 2 -->
+      <a href="#" class="post-card small">
+        <div class="card-img-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=700&q=80" alt="Moto custom">
+        </div>
+        <div class="card-body">
+          <span class="card-category">Customização</span>
+          <h3 class="card-title">Scrambler Caseiro: De R$4.000 a uma Moto de Coleção</h3>
+          <div class="card-meta">
+            <span>Carlos Builder</span>
+            <span class="sep">•</span>
+            <span>08 Mai 2025</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-section">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item fade-up">
+        <span class="stat-num">8<span>M</span></span>
+        <span class="stat-label">Leitores mensais</span>
+      </div>
+      <div class="stat-item fade-up">
+        <span class="stat-num">1<span>.</span>200<span>+</span></span>
+        <span class="stat-label">Artigos publicados</span>
+      </div>
+      <div class="stat-item fade-up">
+        <span class="stat-num">340<span>+</span></span>
+        <span class="stat-label">Motos testadas</span>
+      </div>
+      <div class="stat-item fade-up">
+        <span class="stat-num">15<span>k</span></span>
+        <span class="stat-label">Km percorridos</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIDEO FEATURE -->
+<div class="video-feature">
+  <div class="video-feature-bg"></div>
+  <div class="video-play fade-up">
+    <a href="#" class="play-btn">▶</a>
+    <p class="video-play-title">Volta pela Serra da<br>Mantiqueira — 900km</p>
+    <p class="video-play-sub">ASSISTIR AO DOCUMENTÁRIO COMPLETO</p>
+  </div>
+</div>
+
+<!-- LATEST POSTS + SIDEBAR -->
+<section>
+  <div class="container">
+    <div class="content-sidebar">
+      <div>
+        <div class="section-header fade-up">
+          <div>
+            <div class="section-label">Publicações</div>
+            <h2 class="section-title">Últimas<br>Matérias</h2>
+          </div>
+          <a href="#" class="see-all">Ver todas</a>
+        </div>
+
+        <div class="posts-grid">
+          <!-- Card 1 -->
+          <a href="#" class="article-card fade-up">
+            <div class="article-img-wrap">
+              <img class="article-img" src="https://images.unsplash.com/photo-1558981359-219d6364c9c8?w=600&q=80" alt="">
+              <span class="article-cat">Segurança</span>
+            </div>
+            <div class="article-body">
+              <h3 class="article-title">Chuva e Asfalto: Guia Definitivo para Pilotagem Segura</h3>
+              <p class="article-excerpt">Conheça as técnicas que todo motociclista deveria dominar antes da temporada de chuvas chegar.</p>
+              <div class="article-meta">
+                <img class="article-author-img" src="https://i.pravatar.cc/40?img=12" alt="">
+                <span>Marina Costa</span>
+                <span class="article-read-time">6 min</span>
+              </div>
+            </div>
+          </a>
+
+          <!-- Card 2 -->
+          <a href="#" class="article-card fade-up">
+            <div class="article-img-wrap">
+              <img class="article-img" src="https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?w=600&q=80" alt="">
+              <span class="article-cat">Comparativo</span>
+            </div>
+            <div class="article-body">
+              <h3 class="article-title">MT-09 vs Z900: Qual a Melhor Naked Esportiva de 2025?</h3>
+              <p class="article-excerpt">Dois monstros, dois estilos distintos. Testamos lado a lado nas mesmas condições para você decidir.</p>
+              <div class="article-meta">
+                <img class="article-author-img" src="https://i.pravatar.cc/40?img=33" alt="">
+                <span>Pedro Lima</span>
+                <span class="article-read-time">11 min</span>
+              </div>
+            </div>
+          </a>
+
+          <!-- Card 3 -->
+          <a href="#" class="article-card fade-up">
+            <div class="article-img-wrap">
+              <img class="article-img" src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" alt="">
+              <span class="article-cat">Rotas</span>
+            </div>
+            <div class="article-body">
+              <h3 class="article-title">5 Roteiros Imperdíveis para Fazer de Moto no Sul do Brasil</h3>
+              <p class="article-excerpt">Da Serra Gaúcha ao Litoral Catarinense, selecionamos os percursos que vão marcar sua memória.</p>
+              <div class="article-meta">
+                <img class="article-author-img" src="https://i.pravatar.cc/40?img=45" alt="">
+                <span>Juliana Pires</span>
+                <span class="article-read-time">9 min</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <aside>
+        <div class="sidebar-widget fade-up">
+          <div class="widget-title">Mais Lidos</div>
+          <a href="#" class="sidebar-card">
+            <img class="sidebar-img" src="https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=200&q=70" alt="">
+            <div class="sidebar-content">
+              <span class="sidebar-cat">Review</span>
+              <div class="sidebar-title">Yamaha NMAX 160 2025: Vale o investimento?</div>
+              <span class="sidebar-date">05 Mai 2025</span>
+            </div>
+          </a>
+          <a href="#" class="sidebar-card">
+            <img class="sidebar-img" src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=200&q=70" alt="">
+            <div class="sidebar-content">
+              <span class="sidebar-cat">Dicas</span>
+              <div class="sidebar-title">10 Acessórios Essenciais para Longas Viagens</div>
+              <span class="sidebar-date">02 Mai 2025</span>
+            </div>
+          </a>
+          <a href="#" class="sidebar-card">
+            <img class="sidebar-img" src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=200&q=70" alt="">
+            <div class="sidebar-content">
+              <span class="sidebar-cat">Custom</span>
+              <div class="sidebar-title">Bobber em Casa: Transformando uma CG 160</div>
+              <span class="sidebar-date">28 Abr 2025</span>
+            </div>
+          </a>
+        </div>
+
+        <div class="sidebar-widget fade-up">
+          <div class="widget-title">Tags</div>
+          <div class="tag-cloud">
+            <a class="tag">Honda</a>
+            <a class="tag">Yamaha</a>
+            <a class="tag">Kawasaki</a>
+            <a class="tag">Segurança</a>
+            <a class="tag">Capacete</a>
+            <a class="tag">Rotas</a>
+            <a class="tag">Custom</a>
+            <a class="tag">Elétrica</a>
+            <a class="tag">Trail</a>
+            <a class="tag">Naked</a>
+            <a class="tag">Sport</a>
+            <a class="tag">Scooter</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<div class="quote-section">
+  <div class="quote-content fade-up">
+    <span class="quote-mark">"</span>
+    <p class="quote-text">Na moto, você não foge da vida. Você a enfrenta com <em>75 cavalos</em> e os dois pulmões abertos.</p>
+    <span class="quote-author">— Throttle Magazine, Edição Especial Liberdade</span>
+  </div>
+</div>
+
+<!-- CATEGORIES -->
+<section>
+  <div class="container">
+    <div class="section-header fade-up">
+      <div>
+        <div class="section-label">Navegar</div>
+        <h2 class="section-title">Categorias</h2>
+      </div>
+    </div>
+    <div class="categories-grid fade-up">
+      <a href="#" class="cat-card">
+        <img class="cat-img" src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=70" alt="">
+        <div class="cat-overlay"></div>
+        <div class="cat-label"><span class="cat-count">48 artigos</span>Reviews</div>
+      </a>
+      <a href="#" class="cat-card">
+        <img class="cat-img" src="https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&q=70" alt="">
+        <div class="cat-overlay"></div>
+        <div class="cat-label"><span class="cat-count">32 artigos</span>Segurança</div>
+      </a>
+      <a href="#" class="cat-card">
+        <img class="cat-img" src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&q=70" alt="">
+        <div class="cat-overlay"></div>
+        <div class="cat-label"><span class="cat-count">27 artigos</span>Custom</div>
+      </a>
+      <a href="#" class="cat-card">
+        <img class="cat-img" src="https://images.unsplash.com/photo-1558981359-219d6364c9c8?w=400&q=70" alt="">
+        <div class="cat-overlay"></div>
+        <div class="cat-label"><span class="cat-count">61 artigos</span>Rotas</div>
+      </a>
+      <a href="#" class="cat-card">
+        <img class="cat-img" src="https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?w=400&q=70" alt="">
+        <div class="cat-overlay"></div>
+        <div class="cat-label"><span class="cat-count">19 artigos</span>Mecânica</div>
+      </a>
+      <a href="#" class="cat-card">
+        <img class="cat-img" src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400&q=70" alt="">
+        <div class="cat-overlay"></div>
+        <div class="cat-label"><span class="cat-count">14 artigos</span>Eventos</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<section class="newsletter-section" id="newsletter">
+  <div class="container">
+    <div class="newsletter-inner fade-up">
+      <div>
+        <span class="newsletter-tag">Newsletter</span>
+        <h2 class="newsletter-title">Acelere<br>seu feed</h2>
+        <p class="newsletter-desc">Receba toda semana as melhores matérias de moto, reviews exclusivos, dicas de segurança e as rotas mais incríveis do Brasil direto no seu e-mail.</p>
+      </div>
+      <div class="newsletter-form">
+        <input class="form-input" type="text" placeholder="Seu nome">
+        <input class="form-input" type="email" placeholder="Seu melhor e-mail">
+        <button class="btn-primary" style="width:100%;justify-content:center;clip-path:none;">
+          ▶ Quero Receber Gratuitamente
+        </button>
+        <p style="font-size:11px;color:var(--muted);text-align:center;">Sem spam. Cancele quando quiser.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand-title">THROTTLE<span>.</span></div>
+        <p class="footer-desc">O maior blog de motociclismo do Brasil. Cobertura apaixonada do universo de duas rodas desde 2015.</p>
+        <div class="social-links">
+          <a class="social-link" href="#">𝕏</a>
+          <a class="social-link" href="#">in</a>
+          <a class="social-link" href="#">▶</a>
+          <a class="social-link" href="#">◉</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-heading">Conteúdo</div>
+        <ul class="footer-links">
+          <li><a href="#">Reviews de Motos</a></li>
+          <li><a href="#">Dicas de Segurança</a></li>
+          <li><a href="#">Rotas e Viagens</a></li>
+          <li><a href="#">Customização</a></li>
+          <li><a href="#">Mecânica Básica</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-heading">Marcas</div>
+        <ul class="footer-links">
+          <li><a href="#">Honda</a></li>
+          <li><a href="#">Yamaha</a></li>
+          <li><a href="#">Kawasaki</a></li>
+          <li><a href="#">BMW Motorrad</a></li>
+          <li><a href="#">Ducati</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-heading">Institucional</div>
+        <ul class="footer-links">
+          <li><a href="#">Sobre Nós</a></li>
+          <li><a href="#">Anuncie</a></li>
+          <li><a href="#">Redação</a></li>
+          <li><a href="#">Contato</a></li>
+          <li><a href="#">Privacidade</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 Throttle Blog — Feito com <span>♥</span> para motociclistas</p>
+      <p>Desenvolvido com paixão por duas rodas</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // Stats counter animation
+  const statNums = document.querySelectorAll('.stat-num');
+  const statObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animation = 'fadeNum 0.6s ease forwards';
+        statObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  statNums.forEach(el => statObserver.observe(el));
+</script>
+</body>
+</html>
