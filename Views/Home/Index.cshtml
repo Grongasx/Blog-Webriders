@@ -1,0 +1,153 @@
+@model ThrottleBlog.ViewModels.HomeViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = null; // home não precisa de prefixo
+
+    // ── FUNÇÃO AUXILIAR DE ROTAS ──
+    // Essa função lê a categoria e decide para qual Controller o link deve ir
+    string GetController(string slug) => slug?.ToLower() switch {
+        "novidades" => "Novidades",
+        "rotas"     => "Rotas",
+        "reviews"   => "Reviews",
+        "eventos"   => "Eventos",
+        _           => "Home"
+    };
+}
+
+@* ── HERO / FEATURED GRID ── *@
+@if (Model.FeaturedPosts.Any())
+{
+    <section class="hero-section">
+        <div class="featured-grid container">
+            
+            @* Post Grande *@
+            @{ 
+                var large = Model.FeaturedPosts.First(); 
+                var largeCtrl = GetController(large.Category.Slug);
+            }
+            <a href="@Url.Action("Detail", largeCtrl, new { slug = large.Slug })" class="post-card large">
+                <div class="card-img-wrap">
+                    <img class="card-img" src="@large.FeaturedImage" alt="@large.Title">
+                </div>
+                <div class="card-body">
+                    <span class="card-category">@large.Category.Name</span>
+                    <h2 class="card-title">@large.Title</h2>
+                    <p class="large card-excerpt">@large.Excerpt</p>
+                    <div class="card-meta">
+                        <span>@large.Author.DisplayName</span>
+                        <span class="sep">·</span>
+                        <span>@large.PublishedAt?.ToString("dd MMM yyyy")</span>
+                        <span class="sep">·</span>
+                        <span>@large.ReadingTime min</span>
+                    </div>
+                </div>
+            </a>
+            
+            @* Posts Menores *@
+            @foreach (var p in Model.FeaturedPosts.Skip(1).Take(2))
+            {
+                var smallCtrl = GetController(p.Category.Slug);
+                <a href="@Url.Action("Detail", smallCtrl, new { slug = p.Slug })" class="post-card small">
+                    <div class="card-img-wrap">
+                        <img class="card-img" src="@p.FeaturedImage" alt="@p.Title">
+                    </div>
+                    <div class="card-body">
+                        <span class="card-category">@p.Category.Name</span>
+                        <h3 class="card-title">@p.Title</h3>
+                        <div class="card-meta">
+                            <span>@p.Author.DisplayName</span>
+                            <span class="sep">·</span>
+                            <span>@p.ReadingTime min</span>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    </section>
+}
+
+@* ── ÚLTIMOS POSTS ── *@
+<section>
+    <div class="container">
+        <div class="section-header fade-up">
+            <div>
+                <div class="section-label">Novidades</div>
+                <h2 class="section-title">Últimos Posts</h2>
+            </div>
+        </div>
+        <div class="posts-grid fade-up">
+            @foreach (var p in Model.LatestPosts)
+            {
+                var postCtrl = GetController(p.Category.Slug);
+                <a href="@Url.Action("Detail", postCtrl, new { slug = p.Slug })" class="article-card">
+                    <div class="article-img-wrap">
+                        <img class="article-img" src="@p.FeaturedImage" alt="@p.Title">
+                        <span class="article-cat">@p.Category.Name</span>
+                    </div>
+                    <div class="article-body">
+                        <h3 class="article-title">@p.Title</h3>
+                        <p class="article-excerpt">@p.Excerpt</p>
+                        <div class="article-meta">
+                            <span>@p.Author.DisplayName</span>
+                            <span class="article-read-time">@p.ReadingTime min</span>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+@* ── CATEGORIAS ── *@
+<section>
+    <div class="container">
+        <div class="section-header fade-up">
+            <div>
+                <div class="section-label">Navegar</div>
+                <h2 class="section-title">Categorias</h2>
+            </div>
+        </div>
+        <div class="categories-grid fade-up">
+            @foreach (var c in Model.Categories)
+            {
+                var catCtrl = GetController(c.Slug);
+                var actionName = catCtrl == "Home" ? "Category" : "Index";
+                var routeSlug = catCtrl == "Home" ? c.Slug : null;
+
+                <a href="@Url.Action(actionName, catCtrl, new { slug = routeSlug })" class="cat-card">
+                    <img class="cat-img" src="@c.ImageUrl" alt="@c.Name">
+                    <div class="cat-overlay"></div>
+                    <div class="cat-label">
+                        <span class="cat-count">@c.Posts.Count(p => p.Status == ThrottleBlog.Models.PostStatus.Published) artigos</span>
+                        @c.Name
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+@* ── NEWSLETTER ── *@
+@if (Model.Settings.NewsletterEnabled)
+{
+    <section class="newsletter-section" id="newsletter">
+        <div class="container">
+            <div class="newsletter-inner fade-up">
+                <div>
+                    <span class="newsletter-tag">Newsletter</span>
+                    <h2 class="newsletter-title">Acelere<br>seu feed</h2>
+                    <p class="newsletter-desc">Receba toda semana as melhores matérias direto no seu e-mail.</p>
+                </div>
+                <form asp-controller="Home" asp-action="Newsletter" method="post" class="newsletter-form">
+                    @Html.AntiForgeryToken()
+                    <input class="form-input" type="text"  name="Name"  placeholder="Seu nome" required>
+                    <input class="form-input" type="email" name="Email" placeholder="Seu melhor e-mail" required>
+                    <button type="submit" class="btn-primary" style="width:100%;justify-content:center">
+                        ▶ Quero Receber Gratuitamente
+                    </button>
+                    <p style="font-size:11px;color:var(--muted);text-align:center">Sem spam. Cancele quando quiser.</p>
+                </form>
+            </div>
+        </div>
+    </section>
+}

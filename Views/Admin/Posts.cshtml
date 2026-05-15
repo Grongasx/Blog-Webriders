@@ -1,0 +1,130 @@
+@model ThrottleBlog.ViewModels.PostListViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Gerenciar Posts";
+}
+
+<form method="get" asp-action="Posts" class="posts-toolbar">
+    <input class="search-input" type="text" name="q" value="@Model.SearchQuery" placeholder="🔍  Buscar posts...">
+
+    <select class="filter-select" name="category">
+        <option value="">Todas as categorias</option>
+        @foreach (var c in Model.Categories)
+        {
+            <option value="@c.Name" selected="@(Model.CategoryFilter == c.Name)">@c.Name</option>
+        }
+    </select>
+
+    <select class="filter-select" name="status">
+        <option value="">Todos os status</option>
+        <option value="Published" selected="@(Model.StatusFilter == "Published")">Publicado</option>
+        <option value="Draft"     selected="@(Model.StatusFilter == "Draft")">Rascunho</option>
+    </select>
+
+    <button type="submit" class="btn-secondary">Filtrar</button>
+</form>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Imagem</th>
+                <th>Título</th>
+                <th>Categoria</th>
+                <th>Autor</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Posts.Any())
+            {
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">◧</div>
+                            <div class="empty-state-title">Nenhum post encontrado</div>
+                        </div>
+                    </td>
+                </tr>
+            }
+            @foreach (var p in Model.Posts)
+            {
+                <tr>
+                    <td>
+                        @if (!string.IsNullOrEmpty(p.FeaturedImage))
+                        {
+                            <img class="post-thumb" src="@p.FeaturedImage" alt="">
+                        }
+                        else
+                        {
+                            <div class="post-thumb-placeholder">◧</div>
+                        }
+                    </td>
+                    <td style="max-width:260px">
+                        <div class="post-title-cell">@p.Title</div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:3px">
+                            @(p.Excerpt.Length > 60 ? p.Excerpt[..60] + "…" : p.Excerpt)
+                        </div>
+                    </td>
+                    <td><span class="cat-tag">@p.Category.Name</span></td>
+                    <td style="font-size:12px;color:var(--muted)">@p.Author.DisplayName</td>
+                    <td style="font-size:12px;color:var(--muted);white-space:nowrap">
+                        @p.CreatedAt.ToString("dd MMM yyyy")
+                    </td>
+                    <td>
+                        <span class="status-badge status-@(p.Status == ThrottleBlog.Models.PostStatus.Published ? "published" : "draft")">
+                            @(p.Status == ThrottleBlog.Models.PostStatus.Published ? "Publicado" : "Rascunho")
+                        </span>
+                    </td>
+                    <td>
+                        <div class="table-actions">
+                            <a class="tbl-btn"
+                               asp-controller="Admin" asp-action="EditPost" asp-route-id="@p.Id">
+                                ✏ Editar
+                            </a>
+
+                            @if (p.Status == ThrottleBlog.Models.PostStatus.Draft)
+                            {
+                                <form asp-action="Publish" asp-route-id="@p.Id" method="post" style="display:inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="tbl-btn">▶ Publicar</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="Unpublish" asp-route-id="@p.Id" method="post" style="display:inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="tbl-btn">⏸ Despubl.</button>
+                                </form>
+                            }
+
+                            <form asp-action="DeletePost" asp-route-id="@p.Id" method="post" style="display:inline"
+                                  onsubmit="return confirm('Excluir «@p.Title»? Esta ação é irreversível.')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="tbl-btn del">✕</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@* Paginação *@
+@if (Model.Pagination.TotalPages > 1)
+{
+    <div class="pagination">
+        @for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+        {
+            <a class="page-btn @(i == Model.Pagination.CurrentPage ? "active" : "")"
+               asp-action="Posts"
+               asp-route-q="@Model.SearchQuery"
+               asp-route-category="@Model.CategoryFilter"
+               asp-route-status="@Model.StatusFilter"
+               asp-route-page="@i">@i</a>
+        }
+    </div>
+}

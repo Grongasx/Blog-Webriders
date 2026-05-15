@@ -1,0 +1,41 @@
+@* ── Views/Admin/Categories.cshtml ── *@
+@model List<ThrottleBlog.ViewModels.CategoryFormViewModel>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Categorias";
+}
+
+@section TopbarActions {
+    <a class="btn-primary" asp-controller="Admin" asp-action="NewCategory">✦ Nova Categoria</a>
+}
+
+<div class="cats-grid">
+    @foreach (var c in Model)
+    {
+        <div class="cat-card-admin">
+            @if (!string.IsNullOrEmpty(c.ImageUrl))
+            {
+                <img class="cat-card-img" src="@c.ImageUrl" alt="@c.Name">
+            }
+            else
+            {
+                <div class="cat-card-img cat-card-img-empty">◉</div>
+            }
+            <div class="cat-card-body">
+                <div class="cat-card-name">@c.Name</div>
+                <div class="cat-card-count">@c.PostCount artigos</div>
+                <div class="cat-card-actions">
+                    <a class="tbl-btn"
+                       asp-controller="Admin" asp-action="EditCategory" asp-route-id="@c.Id">
+                        ✏ Editar
+                    </a>
+                    <form asp-action="DeleteCategory" asp-route-id="@c.Id" method="post" style="display:inline"
+                          onsubmit="return confirm('Excluir categoria «@c.Name»?')">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="tbl-btn del">✕</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>

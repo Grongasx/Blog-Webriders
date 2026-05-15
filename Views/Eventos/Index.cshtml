@@ -1,0 +1,125 @@
+@model ThrottleBlog.ViewModels.CategoryPageViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Eventos";
+}
+
+@* ══════════════════════════════════
+   HERO
+══════════════════════════════════ *@
+@if (Model.HeroPost is not null)
+{
+    var h = Model.HeroPost;
+    <section class="cat-hero" style="background-image:url('@h.FeaturedImage')">
+        <div class="cat-hero-overlay cat-hero-overlay--accent"></div>
+        <div class="cat-hero-content container">
+            <span class="cat-hero-label">Eventos</span>
+            <h1 class="cat-hero-title">@h.Title</h1>
+            <p class="cat-hero-excerpt">@h.Excerpt</p>
+            <div class="cat-hero-meta">
+                <span>@h.Author.DisplayName</span>
+                <span class="sep">·</span>
+                <span>@h.PublishedAt?.ToString("dd MMM yyyy")</span>
+            </div>
+            <a class="btn-hero" asp-controller="Home" asp-action="Detail" asp-route-slug="@h.Slug">
+                Ver evento →
+            </a>
+        </div>
+    </section>
+}
+
+@* ══════════════════════════════════
+   PRÓXIMOS EVENTOS — linha horizontal
+══════════════════════════════════ *@
+@if (Model.FeaturedPosts.Any())
+{
+    <section class="section-gap">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <div class="section-label">Na agenda</div>
+                    <h2 class="section-title">Próximos Eventos</h2>
+                </div>
+            </div>
+            <div class="events-upcoming">
+                @foreach (var e in Model.FeaturedPosts)
+                {
+                    <a asp-controller="Home" asp-action="Detail"
+                       asp-route-slug="@e.Slug" class="event-upcoming-card">
+                        <div class="event-date-badge">
+                            <span class="event-date-day">@e.PublishedAt?.ToString("dd")</span>
+                            <span class="event-date-month">@e.PublishedAt?.ToString("MMM").ToUpper()</span>
+                        </div>
+                        <div class="event-upcoming-info">
+                            <h3 class="event-upcoming-title">@e.Title</h3>
+                            <p class="event-upcoming-excerpt">@e.Excerpt</p>
+                        </div>
+                        <span class="list-card-arrow">→</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+@* ══════════════════════════════════
+   TODOS OS EVENTOS — grid com card especial
+══════════════════════════════════ *@
+<section class="section-gap">
+    <div class="container">
+        <div class="section-header">
+            <div>
+                <div class="section-label">Arquivo</div>
+                <h2 class="section-title">Todos os Eventos</h2>
+            </div>
+        </div>
+
+        @if (!Model.Posts.Any())
+        {
+            <div class="empty-cat">
+                <span>📅</span>
+                <p>Nenhum evento publicado ainda. Fique de olho na agenda!</p>
+            </div>
+        }
+        else
+        {
+            <div class="events-grid">
+                @foreach (var p in Model.Posts)
+                {
+                    <a asp-controller="Home" asp-action="Detail"
+                       asp-route-slug="@p.Slug" class="event-card">
+                        <div class="event-card-img-wrap">
+                            <img class="event-card-img" src="@p.FeaturedImage" alt="@p.Title">
+                            <div class="event-card-date">
+                                <span class="event-date-day">@p.PublishedAt?.ToString("dd")</span>
+                                <span class="event-date-month">@p.PublishedAt?.ToString("MMM").ToUpper()</span>
+                            </div>
+                        </div>
+                        <div class="event-card-body">
+                            <span class="cat-tag">Evento</span>
+                            <h3 class="event-card-title">@p.Title</h3>
+                            <p class="event-card-excerpt">@p.Excerpt</p>
+                            <div class="article-meta">
+                                <span>@p.Author.DisplayName</span>
+                                <span class="sep">·</span>
+                                <span>@p.ReadingTime min</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            @if (Model.Pagination.TotalPages > 1)
+            {
+                <div class="pagination">
+                    @for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+                    {
+                        <a class="page-btn @(i == Model.Pagination.CurrentPage ? "active" : "")"
+                           asp-controller="Eventos" asp-action="Index"
+                           asp-route-page="@i">@i</a>
+                    }
+                </div>
+            }
+        }
+    </div>
+</section>

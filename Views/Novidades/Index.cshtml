@@ -1,0 +1,110 @@
+@model ThrottleBlog.ViewModels.CategoryPageViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Novidades";
+}
+
+@* ══════════════════════════════════
+   HERO — Último post em destaque
+══════════════════════════════════ *@
+@if (Model.HeroPost is not null)
+{
+    var h = Model.HeroPost;
+    <section class="cat-hero" style="background-image:url('@h.FeaturedImage')">
+        <div class="cat-hero-overlay"></div>
+        <div class="cat-hero-content container">
+            <span class="cat-hero-label">Novidades</span>
+            <h1 class="cat-hero-title">@h.Title</h1>
+            <p class="cat-hero-excerpt">@h.Excerpt</p>
+            <div class="cat-hero-meta">
+                <span>@h.Author.DisplayName</span>
+                <span class="sep">·</span>
+                <span>@h.PublishedAt?.ToString("dd MMM yyyy")</span>
+                <span class="sep">·</span>
+                <span>@h.ReadingTime min</span>
+            </div>
+            <a class="btn-hero" asp-controller="Home" asp-action="Detail" asp-route-slug="@h.Slug">
+                Ler artigo →
+            </a>
+        </div>
+    </section>
+}
+
+@* ══════════════════════════════════
+   TICKER — posts mais recentes
+══════════════════════════════════ *@
+@if (Model.TickerPosts.Any())
+{
+    <div class="news-ticker-wrap">
+        <span class="ticker-label">ÚLTIMAS</span>
+        <div class="ticker-track">
+            @foreach (var t in Model.TickerPosts)
+            {
+                <a class="ticker-item"
+                   asp-controller="Home" asp-action="Detail"
+                   asp-route-slug="@t.Slug">@t.Title</a>
+                <span class="ticker-sep">◆</span>
+            }
+        </div>
+    </div>
+}
+
+@* ══════════════════════════════════
+   GRID DE ARTIGOS
+══════════════════════════════════ *@
+<section class="section-gap">
+    <div class="container">
+        <div class="section-header">
+            <div>
+                <div class="section-label">Novidades</div>
+                <h2 class="section-title">Tudo que acontece no mundo das motos</h2>
+            </div>
+        </div>
+
+        @if (!Model.Posts.Any())
+        {
+            <div class="empty-cat">
+                <span>📰</span>
+                <p>Nenhuma novidade publicada ainda. Volte em breve!</p>
+            </div>
+        }
+        else
+        {
+            <div class="posts-grid">
+                @foreach (var p in Model.Posts)
+                {
+                    <a asp-controller="Home" asp-action="Detail"
+                       asp-route-slug="@p.Slug" class="article-card">
+                        <div class="article-img-wrap">
+                            <img class="article-img" src="@p.FeaturedImage" alt="@p.Title">
+                            <span class="article-cat">Novidades</span>
+                        </div>
+                        <div class="article-body">
+                            <h3 class="article-title">@p.Title</h3>
+                            <p class="article-excerpt">@p.Excerpt</p>
+                            <div class="article-meta">
+                                <span>@p.Author.DisplayName</span>
+                                <span class="sep">·</span>
+                                <span>@p.PublishedAt?.ToString("dd MMM yyyy")</span>
+                                <span class="article-read-time">@p.ReadingTime min</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            @* Paginação *@
+            @if (Model.Pagination.TotalPages > 1)
+            {
+                <div class="pagination">
+                    @for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+                    {
+                        <a class="page-btn @(i == Model.Pagination.CurrentPage ? "active" : "")"
+                           asp-controller="Novidades" asp-action="Index"
+                           asp-route-page="@i">@i</a>
+                    }
+                </div>
+            }
+        }
+    </div>
+</section>

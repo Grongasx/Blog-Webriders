@@ -1,0 +1,146 @@
+@model ThrottleBlog.ViewModels.SettingsViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Configurações";
+}
+
+<div class="settings-grid">
+
+    <!-- ── Informações do Blog ── -->
+    <form asp-action="Settings" method="post">
+        @Html.AntiForgeryToken()
+        <div class="settings-section">
+            <div class="settings-section-title">Informações do Blog</div>
+
+            <div class="form-group" style="margin-bottom:14px">
+                <label class="form-label">Nome do Blog</label>
+                <input class="form-input" asp-for="BlogName" placeholder="Webriders">
+            </div>
+            <div class="form-group" style="margin-bottom:14px">
+                <label class="form-label">Tagline</label>
+                <input class="form-input" asp-for="Tagline" placeholder="Estrada, velocidade e liberdade.">
+            </div>
+            <div class="form-group" style="margin-bottom:14px">
+                <label class="form-label">Texto da Barra Superior</label>
+                <input class="form-input" asp-for="TopBarText" placeholder="🏍️ Bem-vindo ao Webriders!">
+            </div>
+            <div class="form-group" style="margin-bottom:20px">
+                <label class="form-label">URL do Blog</label>
+                <input class="form-input" asp-for="BlogUrl" type="url" placeholder="https://webriders.com.br">
+            </div>
+            <button type="submit" class="btn-primary">✓ Salvar Configurações</button>
+        </div>
+    </form>
+
+    <!-- ── Funcionalidades ── -->
+    <form asp-action="Settings" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="BlogName">
+        <input type="hidden" asp-for="Tagline">
+        <input type="hidden" asp-for="TopBarText">
+        <input type="hidden" asp-for="BlogUrl">
+        <input type="hidden" asp-for="Instagram">
+        <input type="hidden" asp-for="YouTube">
+        <input type="hidden" asp-for="Twitter">
+        <input type="hidden" asp-for="LinkedIn">
+
+        <div class="settings-section">
+            <div class="settings-section-title">Funcionalidades</div>
+
+            @{
+                void ToggleRow(string propName, string label, string desc, bool value)
+                {
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">@label</div>
+                            <div class="toggle-desc">@desc</div>
+                        </div>
+                        <input type="hidden" name="@propName" value="false">
+                        <div class="toggle @(value ? "on" : "")"
+                             onclick="toggleCheck(this, '@propName')"></div>
+                        <input type="checkbox" name="@propName" value="true"
+                               @(value ? "checked" : "")
+                               style="display:none" id="cb-@propName">
+                    </div>
+                }
+            }
+
+            @{ ToggleRow("NewsletterEnabled", "Newsletter ativa",   "Exibir formulário de inscrição", Model.NewsletterEnabled); }
+            @{ ToggleRow("CommentsEnabled",   "Comentários",        "Permitir comentários nos posts",  Model.CommentsEnabled); }
+            @{ ToggleRow("MaintenanceMode",   "Modo manutenção",    "Blog visível apenas para admin",  Model.MaintenanceMode); }
+            @{ ToggleRow("TickerEnabled",     "Ticker de notícias", "Barra animada no topo",           Model.TickerEnabled); }
+            @{ ToggleRow("FeaturedEnabled",   "Posts em destaque",  "Seção hero na home",              Model.FeaturedEnabled); }
+
+            <button type="submit" class="btn-primary" style="margin-top:20px">✓ Salvar</button>
+        </div>
+    </form>
+
+    <!-- ── Alterar Credenciais ── -->
+    <form asp-controller="Admin" asp-action="ChangePassword" method="post">
+        @Html.AntiForgeryToken()
+        <div class="settings-section">
+            <div class="settings-section-title">Credenciais de Acesso</div>
+
+            <div class="form-group" style="margin-bottom:14px">
+                <label class="form-label">Usuário Admin</label>
+                <input class="form-input" name="UserName" value="@User.Identity!.Name">
+            </div>
+            <div class="form-group" style="margin-bottom:14px">
+                <label class="form-label">Nova Senha</label>
+                <input class="form-input" type="password" name="NewPassword" placeholder="••••••••">
+            </div>
+            <div class="form-group" style="margin-bottom:20px">
+                <label class="form-label">Confirmar Nova Senha</label>
+                <input class="form-input" type="password" name="ConfirmPassword" placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn-primary">✓ Alterar Credenciais</button>
+        </div>
+    </form>
+
+    <!-- ── Redes Sociais ── -->
+    <form asp-action="Settings" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="BlogName">
+        <input type="hidden" asp-for="Tagline">
+        <input type="hidden" asp-for="TopBarText">
+        <input type="hidden" asp-for="BlogUrl">
+        <input type="hidden" asp-for="NewsletterEnabled">
+        <input type="hidden" asp-for="CommentsEnabled">
+        <input type="hidden" asp-for="MaintenanceMode">
+        <input type="hidden" asp-for="TickerEnabled">
+        <input type="hidden" asp-for="FeaturedEnabled">
+
+        <div class="settings-section">
+            <div class="settings-section-title">Redes Sociais</div>
+
+            <div class="form-group" style="margin-bottom:14px">
+                <label class="form-label">Instagram</label>
+                <input class="form-input" asp-for="Instagram" placeholder="https://instagram.com/webriders">
+            </div>
+            <div class="form-group" style="margin-bottom:14px">
+                <label class="form-label">YouTube</label>
+                <input class="form-input" asp-for="YouTube" placeholder="https://youtube.com/webriders">
+            </div>
+            <div class="form-group" style="margin-bottom:14px">
+                <label class="form-label">X (Twitter)</label>
+                <input class="form-input" asp-for="Twitter" placeholder="https://x.com/webriders_br">
+            </div>
+            <div class="form-group" style="margin-bottom:20px">
+                <label class="form-label">LinkedIn</label>
+                <input class="form-input" asp-for="LinkedIn" placeholder="https://linkedin.com/company/webriders">
+            </div>
+            <button type="submit" class="btn-primary">✓ Salvar Redes</button>
+        </div>
+    </form>
+
+</div>
+
+@section Scripts {
+<script>
+function toggleCheck(el, name) {
+    el.classList.toggle('on');
+    const cb = document.getElementById('cb-' + name);
+    if (cb) cb.checked = el.classList.contains('on');
+}
+</script>
+}

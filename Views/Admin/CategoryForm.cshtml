@@ -1,0 +1,52 @@
+@* ── Views/Admin/CategoryForm.cshtml ── *@
+@model ThrottleBlog.ViewModels.CategoryFormViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = Model.Id == 0 ? "Nova Categoria" : "Editar Categoria";
+}
+
+<div style="max-width:560px">
+    <form asp-action="SaveCategory" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id">
+
+        <div class="settings-section">
+            <div class="settings-section-title">@ViewData["Title"]</div>
+
+            <div class="form-group" style="margin-bottom:16px">
+                <label class="form-label">Nome *</label>
+                <input class="form-input" asp-for="Name" placeholder="Ex: Trail">
+                <span asp-validation-for="Name" class="field-error"></span>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px">
+                <label class="form-label">URL da Imagem</label>
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <img src="@Model.ImageUrl" style="width:100%;height:120px;object-fit:cover;margin-bottom:8px;border:1px solid var(--border)">
+                }
+                <input class="form-input" asp-for="ImageUrl" placeholder="https://images.unsplash.com/..."
+                       oninput="previewCatImg(this.value)" id="cat-img-input">
+                <span asp-validation-for="ImageUrl" class="field-error"></span>
+            </div>
+
+            <div class="form-group" style="margin-bottom:24px">
+                <label class="form-label">Ordem de Exibição</label>
+                <input class="form-input" asp-for="SortOrder" type="number" min="0">
+            </div>
+
+            <div style="display:flex;gap:10px">
+                <button type="submit" class="btn-primary">✓ Salvar</button>
+                <a class="btn-secondary" asp-controller="Admin" asp-action="Categories">Cancelar</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+function previewCatImg(url) {
+    // preview opcional — pode adicionar lógica aqui
+}
+</script>
+}

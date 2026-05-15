@@ -1,0 +1,88 @@
+@using ThrottleBlog.Models
+@inject ThrottleBlog.Services.ISettingsService SettingsService
+@{
+    var settings   = await SettingsService.GetAsync();
+    var categories = ViewBag.Categories as List<Category>;
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " — " : "")@settings.BlogName</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,900&family=Barlow:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    @if (settings.TickerEnabled)
+    {
+        <div class="topbar">@settings.TopBarText</div>
+    }
+
+    <nav>
+        <a class="nav-logo" asp-controller="Home" asp-action="Index">
+            <div class="logo-icon">⬡</div>
+            @settings.BlogName<span>.</span>
+        </a>
+        <ul class="nav-links">
+            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li><a asp-controller="Home" asp-action="Category" asp-route-slug="novidades">Novidades</a></li>
+            <li><a asp-controller="Home" asp-action="Category" asp-route-slug="rotas">Rotas</a></li>
+            <li><a asp-controller="Home" asp-action="Category" asp-route-slug="reviews">Reviews</a></li>
+            <li><a asp-controller="Home" asp-action="Category" asp-route-slug="eventos">Eventos</a></li>
+        </ul>
+        <a class="nav-cta" asp-controller="Home" asp-action="Index" asp-fragment="newsletter">Newsletter</a>
+    </nav>
+
+    <main>
+        @if (TempData["NewsletterSuccess"] is string okMsg)
+        {
+            <div class="flash flash-success">@okMsg</div>
+        }
+        @if (TempData["NewsletterError"] is string errMsg)
+        {
+            <div class="flash flash-error">@errMsg</div>
+        }
+        @RenderBody()
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                @* Lado Esquerdo: Marca e Social *@
+                <div>
+                    <div class="footer-brand-title">@settings.BlogName<span>.</span></div>
+                    <p class="footer-desc">@settings.Tagline</p>
+                    <div class="social-links">
+                        @if (!string.IsNullOrEmpty(settings.Twitter))   { <a class="social-link" href="@settings.Twitter"   target="_blank">𝕏</a> }
+                        @if (!string.IsNullOrEmpty(settings.LinkedIn))  { <a class="social-link" href="@settings.LinkedIn"  target="_blank">in</a> }
+                        @if (!string.IsNullOrEmpty(settings.YouTube))   { <a class="social-link" href="@settings.YouTube"   target="_blank">▶</a> }
+                        @if (!string.IsNullOrEmpty(settings.Instagram)) { <a class="social-link" href="@settings.Instagram" target="_blank">◉</a> }
+                    </div>
+                </div>
+
+                @* Lado Direito: Navegação Atualizada *@
+                <div>
+                    <div class="footer-nav-title">Explorar</div>
+                    <ul class="footer-nav-list">
+                        @* Apontando para os novos Controllers e Action Index *@
+                        <li><a asp-controller="Novidades" asp-action="Index">Novidades</a></li>
+                        <li><a asp-controller="Rotas"     asp-action="Index">Rotas</a></li>
+                        <li><a asp-controller="Reviews"   asp-action="Index">Reviews</a></li>
+                        <li><a asp-controller="Eventos"   asp-action="Index">Eventos</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© @DateTime.Now.Year @settings.BlogName — Feito com <span>♥</span> para motociclistas</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

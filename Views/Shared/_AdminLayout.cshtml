@@ -1,0 +1,108 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ThrottleBlog.Models.ApplicationUser> SignInManager
+@inject UserManager<ThrottleBlog.Models.ApplicationUser>   UserManager
+@{
+    var user        = await UserManager.GetUserAsync(User);
+    var displayName = user?.DisplayName ?? user?.UserName ?? "Admin";
+    var initial     = displayName.Length > 0 ? displayName[0].ToString().ToUpper() : "A";
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " — " : "")Webriders Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,900&family=Barlow:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true">
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-logo-icon">
+                <img src="~/image/logo-icon.png" alt="Logo" width="30" asp-append-version="true" />
+            </div>
+            <div>
+                <div class="sidebar-brand-name">Webriders<span>.</span></div>
+                <div class="sidebar-brand-sub">Admin</div>
+            </div>
+        </div>
+
+        <div class="sidebar-section-label">Principal</div>
+        <a class="nav-item @(ViewContext.RouteData.Values["action"]?.ToString() is "Index" or "Dashboard" ? "active" : "")"
+           asp-controller="Admin" asp-action="Index">
+            <span class="nav-icon">◈</span> Dashboard
+        </a>
+        <a class="nav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Posts" ? "active" : "")"
+           asp-controller="Admin" asp-action="Posts">
+            <span class="nav-icon">◧</span> Posts
+        </a>
+        <a class="nav-item @(ViewContext.RouteData.Values["action"]?.ToString() is "NewPost" or "EditPost" ? "active" : "")"
+           asp-controller="Admin" asp-action="NewPost">
+            <span class="nav-icon">✦</span> Novo Post
+        </a>
+
+        <div class="sidebar-section-label">Conteúdo</div>
+        <a class="nav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Categories" ? "active" : "")"
+           asp-controller="Admin" asp-action="Categories">
+            <span class="nav-icon">▦</span> Categorias
+        </a>
+
+        <div class="sidebar-section-label">Sistema</div>
+        <a class="nav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Settings" ? "active" : "")"
+           asp-controller="Admin" asp-action="Settings">
+            <span class="nav-icon">◎</span> Configurações
+        </a>
+        <a class="nav-item" asp-controller="Home" asp-action="Index" target="_blank">
+            <span class="nav-icon">↗</span> Ver Blog
+        </a>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user-avatar">@initial</div>
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name">@displayName</div>
+                <div class="sidebar-user-role">Super Admin</div>
+            </div>
+            <form asp-controller="Auth" asp-action="Logout" method="post" style="margin:0">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-logout" title="Sair">⏻</button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <div class="topbar-admin">
+            <div class="topbar-title">@(ViewData["Title"] ?? "Dashboard")</div>
+            <div class="topbar-actions">
+                @await RenderSectionAsync("TopbarActions", required: false)
+                @if (ViewData["Title"]?.ToString() != "Novo Post")
+                {
+                    <a class="btn-primary" asp-controller="Admin" asp-action="NewPost">✦ Novo Post</a>
+                }
+            </div>
+        </div>
+
+        @if (TempData["Success"] is string ok)
+        {
+            <div class="alert alert-success">✓ @ok</div>
+        }
+        @if (TempData["Error"] is string err)
+        {
+            <div class="alert alert-error">⚠ @err</div>
+        }
+
+        <div class="page-content">
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

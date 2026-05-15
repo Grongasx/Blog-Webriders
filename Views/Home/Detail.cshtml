@@ -1,0 +1,86 @@
+@model ThrottleBlog.ViewModels.PostDetailViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = Model.Post.Title;
+}
+
+<article class="post-detail container">
+
+    @* ── CABEÇALHO ── *@
+    <header class="post-header">
+        <a class="post-back"
+           asp-controller="Home" asp-action="Category"
+           asp-route-slug="@Model.Post.Category.Slug">
+            ← @Model.Post.Category.Name
+        </a>
+        <span class="card-category">@Model.Post.Category.Name</span>
+        <h1 class="post-title">@Model.Post.Title</h1>
+        <p class="post-excerpt">@Model.Post.Excerpt</p>
+
+        <div class="post-meta">
+            <span>@Model.Post.Author.DisplayName</span>
+            <span class="sep">·</span>
+            <span>@Model.Post.PublishedAt?.ToString("dd 'de' MMMM 'de' yyyy")</span>
+            <span class="sep">·</span>
+            <span>@Model.Post.ReadingTime min de leitura</span>
+        </div>
+    </header>
+
+    @* ── IMAGEM DESTAQUE ── *@
+    @if (!string.IsNullOrEmpty(Model.Post.FeaturedImage))
+    {
+        <img class="post-featured-img" src="@Model.Post.FeaturedImage" alt="@Model.Post.Title">
+    }
+
+    @* ── CONTEÚDO (Markdown → HTML) ── *@
+    <div class="post-content">
+        @Html.Raw(Model.ContentHtml)
+    </div>
+
+    @* ── TAGS ── *@
+    @if (Model.Post.PostTags.Any())
+    {
+        <div class="post-tags">
+            @foreach (var pt in Model.Post.PostTags)
+            {
+                <a class="tag"
+                   asp-controller="Home" asp-action="Search"
+                   asp-route-q="@pt.Tag.Name">@pt.Tag.Name</a>
+            }
+        </div>
+    }
+</article>
+
+@* ── POSTS RELACIONADOS ── *@
+@if (Model.RelatedPosts.Any())
+{
+    <section>
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <div class="section-label">Veja também</div>
+                    <h2 class="section-title">Posts Relacionados</h2>
+                </div>
+            </div>
+            <div class="posts-grid">
+                @foreach (var p in Model.RelatedPosts)
+                {
+                    <a href="@Url.Action("Detail","Home", new { slug = p.Slug })" class="article-card">
+                        <div class="article-img-wrap">
+                            <img class="article-img" src="@p.FeaturedImage" alt="@p.Title">
+                            <span class="article-cat">@p.Category.Name</span>
+                        </div>
+                        <div class="article-body">
+                            <h3 class="article-title">@p.Title</h3>
+                            <p class="article-excerpt">@p.Excerpt</p>
+                            <div class="article-meta">
+                                <span>@p.Author.DisplayName</span>
+                                <span class="article-read-time">@p.ReadingTime min</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+}

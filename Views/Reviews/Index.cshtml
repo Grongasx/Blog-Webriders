@@ -1,0 +1,128 @@
+@model ThrottleBlog.ViewModels.CategoryPageViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Reviews";
+}
+
+@* ══════════════════════════════════
+   HERO
+══════════════════════════════════ *@
+@if (Model.HeroPost is not null)
+{
+    var h = Model.HeroPost;
+    <section class="cat-hero" style="background-image:url('@h.FeaturedImage')">
+        <div class="cat-hero-overlay cat-hero-overlay--dark"></div>
+        <div class="cat-hero-content container">
+            <span class="cat-hero-label">Review</span>
+            <h1 class="cat-hero-title">@h.Title</h1>
+            <p class="cat-hero-excerpt">@h.Excerpt</p>
+            <div class="cat-hero-meta">
+                <span>@h.Author.DisplayName</span>
+                <span class="sep">·</span>
+                <span>@h.PublishedAt?.ToString("dd MMM yyyy")</span>
+                <span class="sep">·</span>
+                <span>@h.ReadingTime min</span>
+            </div>
+            <a class="btn-hero" asp-controller="Home" asp-action="Detail" asp-route-slug="@h.Slug">
+                Ler review →
+            </a>
+        </div>
+    </section>
+}
+
+@* ══════════════════════════════════
+   REVIEWS EM DESTAQUE — linha dupla
+══════════════════════════════════ *@
+@if (Model.FeaturedPosts.Any())
+{
+    <section class="section-gap">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <div class="section-label">Reviews em Destaque</div>
+                    <h2 class="section-title">Os testes mais aguardados</h2>
+                </div>
+            </div>
+            <div class="reviews-featured-grid">
+                @foreach (var f in Model.FeaturedPosts)
+                {
+                    <a asp-controller="Home" asp-action="Detail"
+                       asp-route-slug="@f.Slug" class="review-featured-card">
+                        <div class="review-img-wrap">
+                            <img class="review-img" src="@f.FeaturedImage" alt="@f.Title">
+                            <span class="review-badge">★ Review</span>
+                        </div>
+                        <div class="review-body">
+                            <h3 class="review-title">@f.Title</h3>
+                            <p class="review-excerpt">@f.Excerpt</p>
+                            <div class="article-meta">
+                                <span>@f.Author.DisplayName</span>
+                                <span class="sep">·</span>
+                                <span>@f.ReadingTime min</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+@* ══════════════════════════════════
+   TODOS OS REVIEWS — grid padrão
+══════════════════════════════════ *@
+<section class="section-gap">
+    <div class="container">
+        <div class="section-header">
+            <div>
+                <div class="section-label">Arquivo</div>
+                <h2 class="section-title">Todos os Reviews</h2>
+            </div>
+        </div>
+
+        @if (!Model.Posts.Any())
+        {
+            <div class="empty-cat">
+                <span>🏍️</span>
+                <p>Nenhum review publicado ainda. Em breve mais testes!</p>
+            </div>
+        }
+        else
+        {
+            <div class="posts-grid">
+                @foreach (var p in Model.Posts)
+                {
+                    <a asp-controller="Home" asp-action="Detail"
+                       asp-route-slug="@p.Slug" class="article-card">
+                        <div class="article-img-wrap">
+                            <img class="article-img" src="@p.FeaturedImage" alt="@p.Title">
+                            <span class="article-cat">Review</span>
+                        </div>
+                        <div class="article-body">
+                            <h3 class="article-title">@p.Title</h3>
+                            <p class="article-excerpt">@p.Excerpt</p>
+                            <div class="article-meta">
+                                <span>@p.Author.DisplayName</span>
+                                <span class="sep">·</span>
+                                <span>@p.PublishedAt?.ToString("dd MMM yyyy")</span>
+                                <span class="article-read-time">@p.ReadingTime min</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            @if (Model.Pagination.TotalPages > 1)
+            {
+                <div class="pagination">
+                    @for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+                    {
+                        <a class="page-btn @(i == Model.Pagination.CurrentPage ? "active" : "")"
+                           asp-controller="Reviews" asp-action="Index"
+                           asp-route-page="@i">@i</a>
+                    }
+                </div>
+            }
+        }
+    </div>
+</section>

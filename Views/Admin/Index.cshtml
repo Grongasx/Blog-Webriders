@@ -1,0 +1,98 @@
+@* ═══════════════════════════════════════════
+   Views/Admin/Index.cshtml  —  Dashboard
+═══════════════════════════════════════════ *@
+@model ThrottleBlog.ViewModels.DashboardViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-card-icon">◧</div>
+        <div class="stat-card-label">Total de Posts</div>
+        <div class="stat-card-num">@Model.TotalPosts</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon">◉</div>
+        <div class="stat-card-label">Publicados</div>
+        <div class="stat-card-num" style="color:var(--success)">@Model.PublishedPosts</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon">◈</div>
+        <div class="stat-card-label">Rascunhos</div>
+        <div class="stat-card-num" style="color:var(--warning)">@Model.DraftPosts</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon">▦</div>
+        <div class="stat-card-label">Categorias</div>
+        <div class="stat-card-num">@Model.TotalCategories</div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div>
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Atividade (últimos 7 dias)</div>
+            </div>
+            <div class="chart-bar-row">
+                @{ var maxVal = Model.WeeklyActivity.Max(d => d.Count); if (maxVal == 0) maxVal = 1; }
+                @foreach (var day in Model.WeeklyActivity)
+                {
+                    var h = (int)((double)day.Count / maxVal * 100);
+                    <div class="chart-bar" style="height:@(h < 5 ? 5 : h)%" title="@day.Count posts"></div>
+                }
+            </div>
+            <div class="chart-labels">
+                @foreach (var day in Model.WeeklyActivity)
+                {
+                    <div class="chart-label">@day.DayLabel</div>
+                }
+            </div>
+        </div>
+
+        <div class="panel" style="margin-top:20px">
+            <div class="panel-header">
+                <div class="panel-title">Posts Recentes</div>
+                <a class="btn-secondary" asp-controller="Admin" asp-action="Posts">Ver todos →</a>
+            </div>
+            <div style="padding:0 24px">
+                @foreach (var p in Model.RecentPosts)
+                {
+                    <div class="recent-item">
+                        @if (!string.IsNullOrEmpty(p.FeaturedImage))
+                        {
+                            <img class="recent-thumb" src="@p.FeaturedImage" alt="">
+                        }
+                        <div class="recent-info">
+                            <div class="recent-title">@p.Title</div>
+                            <div class="recent-meta">
+                                <span class="cat-tag">@p.Category.Name</span>
+                                &nbsp; @p.CreatedAt.ToString("dd MMM yyyy")
+                            </div>
+                        </div>
+                        <span class="status-badge status-@(p.Status == ThrottleBlog.Models.PostStatus.Published ? "published" : "draft")">
+                            @(p.Status == ThrottleBlog.Models.PostStatus.Published ? "Publicado" : "Rascunho")
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="panel">
+            <div class="panel-header"><div class="panel-title">Posts por Categoria</div></div>
+            <div style="padding:16px 24px">
+                @foreach (var c in Model.CategoryBreakdown)
+                {
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                        <span class="cat-tag">@c.Name</span>
+                        <span style="color:var(--muted)">@c.Count posts</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

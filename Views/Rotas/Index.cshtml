@@ -1,0 +1,123 @@
+@model ThrottleBlog.ViewModels.CategoryPageViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Rotas";
+}
+
+@* ══════════════════════════════════
+   HERO
+══════════════════════════════════ *@
+@if (Model.HeroPost is not null)
+{
+    var h = Model.HeroPost;
+    <section class="cat-hero" style="background-image:url('@h.FeaturedImage')">
+        <div class="cat-hero-overlay"></div>
+        <div class="cat-hero-content container">
+            <span class="cat-hero-label">Rotas</span>
+            <h1 class="cat-hero-title">@h.Title</h1>
+            <p class="cat-hero-excerpt">@h.Excerpt</p>
+            <div class="cat-hero-meta">
+                <span>@h.Author.DisplayName</span>
+                <span class="sep">·</span>
+                <span>@h.PublishedAt?.ToString("dd MMM yyyy")</span>
+                <span class="sep">·</span>
+                <span>@h.ReadingTime min</span>
+            </div>
+            <a class="btn-hero" asp-controller="Home" asp-action="Detail" asp-route-slug="@h.Slug">
+                Ver a rota →
+            </a>
+        </div>
+    </section>
+}
+
+@* ══════════════════════════════════
+   DESTAQUE TRIPLO — top 3 rotas
+══════════════════════════════════ *@
+@if (Model.FeaturedPosts.Any())
+{
+    <section class="section-gap">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <div class="section-label">Em Destaque</div>
+                    <h2 class="section-title">Rotas imperdíveis do momento</h2>
+                </div>
+            </div>
+            <div class="featured-trio">
+                @foreach (var f in Model.FeaturedPosts)
+                {
+                    <a asp-controller="Home" asp-action="Detail"
+                       asp-route-slug="@f.Slug" class="featured-trio-card"
+                       style="background-image:url('@f.FeaturedImage')">
+                        <div class="trio-overlay"></div>
+                        <div class="trio-body">
+                            <h3 class="trio-title">@f.Title</h3>
+                            <p class="trio-excerpt">@f.Excerpt</p>
+                            <span class="trio-read">@f.ReadingTime min de leitura</span>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+@* ══════════════════════════════════
+   LISTA DE TODAS AS ROTAS
+══════════════════════════════════ *@
+<section class="section-gap">
+    <div class="container">
+        <div class="section-header">
+            <div>
+                <div class="section-label">Explorar</div>
+                <h2 class="section-title">Todas as Rotas</h2>
+            </div>
+        </div>
+
+        @if (!Model.Posts.Any())
+        {
+            <div class="empty-cat">
+                <span>🗺️</span>
+                <p>Nenhuma rota publicada ainda. Prepare a moto e aguarde!</p>
+            </div>
+        }
+        else
+        {
+            <div class="posts-list-alt">
+                @foreach (var p in Model.Posts)
+                {
+                    <a asp-controller="Home" asp-action="Detail"
+                       asp-route-slug="@p.Slug" class="list-card">
+                        <div class="list-card-img-wrap">
+                            <img class="list-card-img" src="@p.FeaturedImage" alt="@p.Title">
+                        </div>
+                        <div class="list-card-body">
+                            <span class="cat-tag">Rotas</span>
+                            <h3 class="list-card-title">@p.Title</h3>
+                            <p class="list-card-excerpt">@p.Excerpt</p>
+                            <div class="article-meta">
+                                <span>@p.Author.DisplayName</span>
+                                <span class="sep">·</span>
+                                <span>@p.PublishedAt?.ToString("dd MMM yyyy")</span>
+                                <span class="article-read-time">@p.ReadingTime min</span>
+                            </div>
+                        </div>
+                        <span class="list-card-arrow">→</span>
+                    </a>
+                }
+            </div>
+
+            @if (Model.Pagination.TotalPages > 1)
+            {
+                <div class="pagination">
+                    @for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+                    {
+                        <a class="page-btn @(i == Model.Pagination.CurrentPage ? "active" : "")"
+                           asp-controller="Rotas" asp-action="Index"
+                           asp-route-page="@i">@i</a>
+                    }
+                </div>
+            }
+        }
+    </div>
+</section>

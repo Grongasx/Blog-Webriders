@@ -1,0 +1,157 @@
+@model ThrottleBlog.ViewModels.PostFormViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var isEdit = Model.Id != 0;
+    ViewData["Title"] = isEdit ? "Editar Post" : "Novo Post";
+}
+
+<form asp-action="SavePost" method="post" id="post-form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id">
+
+    <div class="editor-layout">
+        <!-- ── COLUNA PRINCIPAL ── -->
+        <div class="editor-main">
+            <div asp-validation-summary="ModelOnly" class="alert alert-error"></div>
+
+            <div class="form-group">
+                <label class="form-label">Título *</label>
+                <input class="form-input title-input" asp-for="Title" placeholder="TÍTULO DO ARTIGO EM MAIÚSCULAS...">
+                <span asp-validation-for="Title" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Resumo / Excerpt</label>
+                <input class="form-input" asp-for="Excerpt" placeholder="Breve descrição exibida nas listagens...">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Conteúdo (Markdown)</label>
+                <textarea class="form-textarea" asp-for="Content"
+                          placeholder="Escreva o conteúdo completo aqui. Suporte a **Markdown**..."></textarea>
+            </div>
+        </div>
+
+        <!-- ── SIDEBAR DO EDITOR ── -->
+        <div class="editor-sidebar">
+
+            <!-- Publicação -->
+            <div class="panel" style="padding:20px">
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" asp-for="Status"
+                            asp-items="@Html.GetEnumSelectList<ThrottleBlog.Models.PostStatus>()"></select>
+                </div>
+                <div class="toggle-row" style="margin-top:14px">
+                    <div>
+                        <div class="toggle-label">Post em Destaque</div>
+                        <div style="font-size:11px;color:var(--muted)">Exibido no hero da home</div>
+                    </div>
+                    <input type="hidden" name="IsFeatured" value="false">
+                    <div class="toggle @(Model.IsFeatured ? "on" : "")"
+                         onclick="toggleFeatured(this)" id="featured-toggle"></div>
+                    <input type="checkbox" asp-for="IsFeatured" id="featured-cb" style="display:none">
+                </div>
+                <div style="display:flex;gap:8px;margin-top:16px">
+                    <button type="submit" class="btn-primary" style="flex:1;justify-content:center">
+                        ✓ @(isEdit ? "Atualizar" : "Salvar")
+                    </button>
+                    @if (!isEdit)
+                    {
+                        <button type="button" class="btn-secondary"
+                                onclick="publishNow()">▶</button>
+                    }
+                </div>
+            </div>
+
+            <!-- Imagem -->
+            <div class="panel" style="padding:20px">
+                <div class="form-group">
+                    <label class="form-label">Imagem Destaque</label>
+                    @if (!string.IsNullOrEmpty(Model.FeaturedImage))
+                    {
+                        <img id="img-preview" class="img-preview" src="@Model.FeaturedImage" alt="">
+                    }
+                    else
+                    {
+                        <div class="img-placeholder" id="img-placeholder">
+                            <span>🖼</span> Nenhuma imagem definida
+                        </div>
+                    }
+                    <input class="form-input" asp-for="FeaturedImage"
+                           placeholder="https://..." style="margin-top:8px"
+                           oninput="previewImage(this.value)" id="img-url-input">
+                    <span asp-validation-for="FeaturedImage" class="field-error"></span>
+                </div>
+            </div>
+
+            <!-- Metadados -->
+            <div class="panel" style="padding:20px">
+                <div class="form-group">
+                    <label class="form-label">Categoria *</label>
+                    <select class="form-select" asp-for="CategoryId"
+                            asp-items="@(new SelectList(Model.Categories, "Id", "Name"))">
+                        <option value="">Selecione…</option>
+                    </select>
+                    <span asp-validation-for="CategoryId" class="field-error"></span>
+                </div>
+                <div class="form-group" style="margin-top:14px">
+                    <label class="form-label">Tags (vírgula separada)</label>
+                    <input class="form-input" asp-for="TagsRaw" placeholder="honda, naked, 2025">
+                </div>
+                <div class="form-group" style="margin-top:14px">
+                    <label class="form-label">Tempo de Leitura (min)</label>
+                    <input class="form-input" asp-for="ReadingTime" type="number" min="1" max="120">
+                </div>
+            </div>
+
+            @if (isEdit)
+            {
+                <div class="panel" style="padding:20px">
+                    <form asp-action="DeletePost" asp-route-id="@Model.Id" method="post"
+                          onsubmit="return confirm('Excluir este post? Ação irreversível.')">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-danger" style="width:100%">
+                            ✕ Excluir este Post
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Hidden field para publicar direto -->
+    <input type="hidden" id="force-publish" name="_forcePublish" value="false">
+</form>
+
+@section Scripts {
+<script>
+function previewImage(url) {
+    const prev = document.getElementById('img-preview');
+    const ph   = document.getElementById('img-placeholder');
+    if (url && url.startsWith('http')) {
+        if (!prev) {
+            const img = document.createElement('img');
+            img.id = 'img-preview'; img.className = 'img-preview'; img.src = url;
+            ph?.parentNode.insertBefore(img, ph);
+            if (ph) ph.style.display = 'none';
+        } else { prev.src = url; prev.style.display = 'block'; if(ph) ph.style.display='none'; }
+    } else {
+        if (prev) prev.style.display = 'none';
+        if (ph)   ph.style.display   = 'flex';
+    }
+}
+
+function toggleFeatured(el) {
+    el.classList.toggle('on');
+    const cb = document.getElementById('featured-cb');
+    cb.checked = el.classList.contains('on');
+}
+
+function publishNow() {
+    const sel = document.querySelector('select[name="Status"]');
+    if (sel) sel.value = 'Published';
+    document.getElementById('post-form').submit();
+}
+</script>
+}
