@@ -1,0 +1,67 @@
+@model ThrottleBlog.ViewModels.SearchViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = $"Busca: {Model.Query}";
+}
+
+<section>
+    <div class="container">
+        <div class="section-header fade-up">
+            <div>
+                <div class="section-label">Busca</div>
+                <h1 class="section-title">Resultados para "@Model.Query"</h1>
+                <p style="color:var(--muted);margin-top:8px">
+                    @Model.Total @(Model.Total == 1 ? "artigo encontrado" : "artigos encontrados")
+                </p>
+            </div>
+        </div>
+
+        @if (!Model.Posts.Any())
+        {
+            <div class="empty-cat fade-up">
+                <span>🔍</span>
+                <p>Nenhum post encontrado. Tente outro termo.</p>
+            </div>
+        }
+        else
+        {
+            <div class="posts-grid fade-up">
+                @foreach (var p in Model.Posts)
+                {
+                    <a asp-controller="Home" asp-action="Detail" asp-route-slug="@p.Slug" class="article-card">
+                        <div class="article-img-wrap">
+                            @if (!string.IsNullOrEmpty(p.FeaturedImage))
+                            {
+                                <img class="article-img" src="@p.FeaturedImage" alt="@p.Title">
+                            }
+                            <span class="article-cat">@p.Category.Name</span>
+                        </div>
+                        <div class="article-body">
+                            <h3 class="article-title">@p.Title</h3>
+                            <p class="article-excerpt">@p.Excerpt</p>
+                            <div class="article-meta">
+                                <span>@p.Author.DisplayName</span>
+                                <span class="sep">·</span>
+                                <span>@p.PublishedAt?.ToString("dd MMM yyyy")</span>
+                                <span class="article-read-time">@p.ReadingTime min</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            @if (Model.Pagination.TotalPages > 1)
+            {
+                <div class="pagination fade-up">
+                    @for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+                    {
+                        <a class="page-btn @(i == Model.Pagination.CurrentPage ? "active" : "")"
+                           asp-controller="Home" asp-action="Search"
+                           asp-route-q="@Model.Query"
+                           asp-route-page="@i">@i</a>
+                    }
+                </div>
+            }
+        }
+    </div>
+</section>

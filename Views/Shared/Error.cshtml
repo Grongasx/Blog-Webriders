@@ -1,0 +1,111 @@
+@model int
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = $"Erro {Model}";
+
+    var (title, message, icon) = Model switch
+    {
+        404 => ("Curva Perdida!", "O post ou a página que você está procurando saiu da pista. Talvez o link esteja quebrado ou a página tenha sido removida.", "🏍️💨"),
+        403 => ("Acesso Negado!", "Você não tem permissão para acessar esta área dos boxes. Por favor, retorne.", "🛑"),
+        _   => ("Motor Fundido!", "Algo deu errado sob o capô! Nosso time de mecânicos já foi acionado para resolver este problema técnico.", "🔧⚡")
+    };
+}
+
+<div class="error-page container">
+    <div class="error-content">
+        <div class="error-badge">STATUS @Model</div>
+        <div class="error-icon">@icon</div>
+        <h1 class="error-title">@title</h1>
+        <p class="error-desc">@message</p>
+        
+        <div class="error-actions">
+            <a asp-controller="Home" asp-action="Index" class="btn-primary">
+                ◀ Voltar ao Grid Principal
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .error-page {
+        min-height: calc(100vh - 250px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 20px;
+        text-align: center;
+    }
+    
+    .error-content {
+        max-width: 600px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        padding: 60px 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    
+    .error-content::before {
+        content: '@Model';
+        position: absolute;
+        right: -30px;
+        bottom: -50px;
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 240px;
+        color: rgba(232, 26, 26, 0.03);
+        line-height: 1;
+        pointer-events: none;
+        letter-spacing: -10px;
+        font-weight: 900;
+    }
+    
+    .error-badge {
+        display: inline-block;
+        background: rgba(232, 26, 26, 0.1);
+        border: 1px solid var(--red);
+        color: var(--red);
+        padding: 6px 16px;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 24px;
+    }
+    
+    .error-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        animation: pulse 2s infinite ease-in-out;
+    }
+    
+    .error-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 900;
+        font-style: italic;
+        font-size: clamp(32px, 5vw, 48px);
+        text-transform: uppercase;
+        line-height: 1;
+        letter-spacing: -1px;
+        margin-bottom: 16px;
+        color: var(--white);
+    }
+    
+    .error-desc {
+        font-size: 15px;
+        color: var(--muted);
+        line-height: 1.6;
+        margin-bottom: 36px;
+    }
+    
+    .error-actions {
+        display: flex;
+        justify-content: center;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.08); }
+    }
+</style>

@@ -1,0 +1,7 @@
+*** quarta atualização do blog ***
+
+- foco total em implementações nos markdowns de postagem, quero que quando o link do produto seja colado, ele traga as informações do produto em questão, com variações, traga imagens etc.
+
+-link de exemplo do nosso site de real: https://www.webriders.com.br/capacete/shark/capacete-shark-spartan-rs-byrhon-kir
+
+-pegue o xpath dos dados que precisa extrair, e crie um keyframe, ou algo que prefira para deixar o produto dividido em um bloco

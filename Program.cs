@@ -10,7 +10,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ── MVC ────────────────────────────────────────────────
 builder.Services.AddControllersWithViews();
-
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient("scraper", client =>
+{
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+        "AppleWebKit/537.36 (KHTML, like Gecko) " +
+        "Chrome/120.0.0.0 Safari/537.36");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 // ── Entity Framework + SQL Server ──────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -55,6 +63,11 @@ builder.Services.AddScoped<ISettingsService,   SettingsService>();
 builder.Services.AddScoped<IDashboardService,  DashboardService>();
 builder.Services.AddScoped<INewsletterService, NewsletterService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<IMarkdownRenderer, MarkdownRenderer>();
+builder.Services.AddScoped<IImageUploadService, LocalImageUploadService>();
+
+builder.Services.AddScoped<IProductScraperService, ProductScraperService>();
+builder.Services.AddScoped<IProductBlockRenderer, ProductBlockRenderer>();
 
 builder.Services.AddTransient<NovidadesController>();
 builder.Services.AddTransient<RotasController>();
@@ -77,6 +90,7 @@ app.UseStatusCodePagesWithReExecute("/erro/{0}");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseMiddleware<MaintenanceMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();

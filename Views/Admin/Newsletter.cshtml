@@ -1,0 +1,120 @@
+@model ThrottleBlog.ViewModels.AdminNewsletterListViewModel
+@using ThrottleBlog.Models
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Newsletter";
+}
+
+<div class="newsletter-stats">
+    <div class="stat-card">
+        <div class="stat-label">Comum (ativos)</div>
+        <div class="stat-value">@Model.CommonTotal</div>
+    </div>
+    <div class="stat-card stat-card-premium">
+        <div class="stat-label">Premium (ativos)</div>
+        <div class="stat-value">@Model.PremiumTotal</div>
+    </div>
+</div>
+
+<form method="get" asp-action="NewsletterSubscribers" class="posts-toolbar">
+    <input class="search-input" type="text" name="q" value="@Model.SearchQuery" placeholder="🔍  Buscar nome, e-mail ou telefone...">
+
+    <select class="filter-select" name="tier">
+        <option value="">Todos os planos</option>
+        <option value="Common"  selected="@(Model.TierFilter == "Common")">Comum</option>
+        <option value="Premium" selected="@(Model.TierFilter == "Premium")">Premium</option>
+    </select>
+
+    <select class="filter-select" name="status">
+        <option value="">Todos os status</option>
+        <option value="active"   selected="@(Model.StatusFilter == "active")">Ativos</option>
+        <option value="inactive" selected="@(Model.StatusFilter == "inactive")">Inativos</option>
+    </select>
+
+    <button type="submit" class="btn-secondary">Filtrar</button>
+</form>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Telefone</th>
+                <th>Plano</th>
+                <th>Inscrição</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Subscribers.Any())
+            {
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">✉</div>
+                            <div class="empty-state-title">Nenhum assinante encontrado</div>
+                        </div>
+                    </td>
+                </tr>
+            }
+            @foreach (var s in Model.Subscribers)
+            {
+                <tr>
+                    <td style="font-weight:600">@s.Name</td>
+                    <td style="font-size:12px;color:var(--muted)">@s.Email</td>
+                    <td style="font-size:12px;color:var(--muted)">@(s.Phone ?? "—")</td>
+                    <td>
+                        <span class="status-badge @(s.Tier == NewsletterTier.Premium ? "status-published" : "status-draft")">
+                            @(s.Tier == NewsletterTier.Premium ? "Premium" : "Comum")
+                        </span>
+                    </td>
+                    <td style="font-size:12px;color:var(--muted);white-space:nowrap">
+                        @s.SubscribedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    </td>
+                    <td>
+                        <span class="status-badge @(s.IsActive ? "status-published" : "status-draft")">
+                            @(s.IsActive ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                    <td class="table-actions">
+                        @if (s.IsActive)
+                        {
+                            <form asp-action="DeactivateSubscriber" asp-route-id="@s.Id" method="post" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-action btn-deactivate" title="Desativar Assinante">
+                                    <span class="icon">×</span> Desativar
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-action="ReactivateSubscriber" asp-route-id="@s.Id" method="post" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-action btn-reactivate" title="Reativar Assinante">
+                                    <span class="icon">↺</span> Reativar
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.Pagination.TotalPages > 1)
+{
+    <div class="pagination">
+        @for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+        {
+            <a class="page-btn @(i == Model.Pagination.CurrentPage ? "active" : "")"
+               asp-action="NewsletterSubscribers"
+               asp-route-page="@i"
+               asp-route-q="@Model.SearchQuery"
+               asp-route-tier="@Model.TierFilter"
+               asp-route-status="@Model.StatusFilter">@i</a>
+        }
+    </div>
+}

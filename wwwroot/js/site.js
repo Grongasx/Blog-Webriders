@@ -34,33 +34,45 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => flash.remove(), 4600);
   }
 
-  // ── Newsletter form submit via fetch (sem reload) ───────────
-  const nlForm = document.querySelector('.newsletter-form');
-  if (nlForm) {
+  // ── Newsletter forms (AJAX) ─────────────────────────────────
+  document.querySelectorAll('.newsletter-form-ajax').forEach(nlForm => {
+    const msgId = nlForm.dataset.messageId;
+    const msgEl = msgId ? document.getElementById(msgId) : null;
+
     nlForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = nlForm.querySelector('button[type="submit"]');
       const original = btn.textContent;
       btn.textContent = '...';
       btn.disabled = true;
+      if (msgEl) { msgEl.textContent = ''; msgEl.className = 'newsletter-message'; }
 
       try {
         const res = await fetch(nlForm.action, {
           method: 'POST',
           body: new FormData(nlForm),
+          credentials: 'include',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
         });
-        // redireciona se o servidor retornar redirect
-        if (res.redirected) {
+
+        const data = await res.json().catch(() => null);
+        if (data && msgEl) {
+          msgEl.textContent = data.message;
+          msgEl.className = 'newsletter-message ' + (data.success ? 'success' : 'error');
+          if (data.success) nlForm.reset();
+        } else if (res.redirected) {
           window.location.href = res.url;
           return;
         }
-        btn.textContent = '✓ Inscrito!';
-        nlForm.reset();
       } catch {
-        btn.textContent = 'Erro. Tente novamente.';
+        if (msgEl) {
+          msgEl.textContent = 'Erro de conexão. Tente novamente.';
+          msgEl.className = 'newsletter-message error';
+        }
       } finally {
-        setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 3000);
+        btn.textContent = original;
+        btn.disabled = false;
       }
     });
-  }
+  });
 });

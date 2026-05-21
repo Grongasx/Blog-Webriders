@@ -165,6 +165,21 @@ body::before {
 .posts-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
 .search-input  { flex: 1; min-width: 200px; background: var(--card); border: 1px solid var(--border); color: var(--white); padding: 9px 16px; font-family: 'Barlow', sans-serif; font-size: 13px; outline: none; transition: border-color .2s; }
 .search-input:focus  { border-color: var(--red); }
+
+.newsletter-stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;
+}
+.newsletter-stats .stat-card {
+  padding: 20px; background: var(--card); border: 1px solid var(--border);
+}
+.newsletter-stats .stat-card-premium { border-color: var(--border-red); }
+.newsletter-stats .stat-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; margin-bottom: 8px;
+}
+.newsletter-stats .stat-value {
+  font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--white);
+}
 .search-input::placeholder { color: var(--muted); }
 .filter-select { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 9px 14px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; outline: none; cursor: pointer; transition: border-color .2s; }
 .filter-select:focus { border-color: var(--red); }
@@ -278,3 +293,43 @@ tbody tr:hover { background: rgba(255,255,255,.025); }
   .settings-grid { grid-template-columns: 1fr; }
   .cats-grid     { grid-template-columns: repeat(2,1fr); }
 }
+
+.table-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.btn-action .icon { font-size: 14px; }
+
+/* Estilo de Desativação (Alerta) */
+.btn-deactivate:hover {
+    background: rgba(232, 26, 26, 0.1);
+    border-color: var(--red);
+    color: var(--red);
+}
+
+/* Estilo de Reativação (Sucesso) */
+.btn-reactivate:hover {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: #22c55e;
+    color: #22c55e;
+}
+

@@ -1,0 +1,140 @@
+@model List<ThrottleBlog.Models.NewsletterSubscriber>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Inscritos na Newsletter";
+    var query = ViewBag.SearchQuery as string ?? "";
+}
+
+<div class="posts-toolbar">
+    <form method="get" asp-controller="Admin" asp-action="Subscribers" style="display:flex; gap:10px; flex:1;">
+        <input type="text" name="q" value="@query" placeholder="Pesquisar por nome ou e-mail..." class="search-input" />
+        <button type="submit" class="btn-primary">Buscar</button>
+        @if (!string.IsNullOrEmpty(query))
+        {
+            <a asp-controller="Admin" asp-action="Subscribers" class="btn-secondary">Limpar</a>
+        }
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">Lista de Inscritos (@Model.Count)</div>
+    </div>
+    
+    <div class="table-wrap">
+        @if (Model.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">✉</div>
+                <div class="empty-state-title">Nenhum inscrito encontrado</div>
+                <p>Nenhum contato cadastrado no momento ou a busca não retornou resultados.</p>
+            </div>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>Data de Inscrição</th>
+                        <th>Plano</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model)
+                    {
+                        <tr>
+                            <td style="font-weight:600;">@s.Name</td>
+                            <td style="color:var(--text); font-family:monospace;">@s.Email</td>
+                            <td style="color:var(--muted);">@s.SubscribedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                <span class="plan-badge @(s.Tier == ThrottleBlog.Models.NewsletterTier.Premium ? "plan-premium" : "plan-free")">
+                                    @(s.Tier == ThrottleBlog.Models.NewsletterTier.Premium ? "Premium" : "Comum")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge @(s.IsActive ? "status-active" : "status-inactive")">
+                                    @(s.IsActive ? "Ativo" : "Inativo")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <!-- Form Status Toggle -->
+                                    <form asp-controller="Admin" asp-action="ToggleSubscriberStatus" asp-route-id="@s.Id" method="post" style="margin:0;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="tbl-btn" title="Ativar ou Inativar inscrição">
+                                            Status
+                                        </button>
+                                    </form>
+
+                                    <!-- Form Plan Toggle -->
+                                    <form asp-controller="Admin" asp-action="ToggleSubscriberPlan" asp-route-id="@s.Id" method="post" style="margin:0;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="tbl-btn" title="Alterar plano">
+                                            Alterar Plano
+                                        </button>
+                                    </form>
+
+                                    <!-- Form Delete -->
+                                    <form asp-controller="Admin" asp-action="DeleteSubscriber" asp-route-id="@s.Id" method="post" style="margin:0;" onsubmit="return confirm('Deseja realmente excluir este inscrito da newsletter?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="tbl-btn del" title="Remover permanentemente">
+                                            Excluir
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .plan-badge {
+            display: inline-block;
+            padding: 3px 9px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .plan-premium {
+            background: rgba(232, 26, 26, 0.15);
+            color: var(--red);
+            border: 1px solid var(--border-red);
+        }
+
+        .plan-free {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+            border: 1px solid var(--border);
+        }
+
+        .status-active {
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--success);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+        }
+
+        .status-inactive {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .tbl-btn.del:hover {
+            background: rgba(232, 26, 26, 0.12) !important;
+            border-color: var(--red) !important;
+            color: #ff6b6b !important;
+        }
+    </style>
+}

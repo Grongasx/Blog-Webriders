@@ -96,13 +96,21 @@ public class BlogSettings
     public string? LinkedIn         { get; set; }
 }
 
+public enum NewsletterTier
+{
+    Common  = 0,
+    Premium = 1
+}
+
 public class NewsletterSubscriber
 {
-    public int      Id           { get; set; }
-    public string   Name         { get; set; } = string.Empty;
-    public string   Email        { get; set; } = string.Empty;
-    public DateTime SubscribedAt { get; set; } = DateTime.UtcNow;
-    public bool     IsActive     { get; set; } = true;
+    public int            Id           { get; set; }
+    public string         Name         { get; set; } = string.Empty;
+    public string         Email        { get; set; } = string.Empty;
+    public string?        Phone        { get; set; }
+    public NewsletterTier Tier         { get; set; } = NewsletterTier.Common;
+    public DateTime       SubscribedAt { get; set; } = DateTime.UtcNow;
+    public bool           IsActive     { get; set; } = true;
 }
 
 public class UploadedFile

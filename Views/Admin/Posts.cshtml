@@ -11,7 +11,8 @@
         <option value="">Todas as categorias</option>
         @foreach (var c in Model.Categories)
         {
-            <option value="@c.Name" selected="@(Model.CategoryFilter == c.Name)">@c.Name</option>
+            @* Ajustado para passar o Id como valor de filtro e bater com a estrutura numérica *@
+            <option value="@c.Id" selected="@(Model.CategoryFilter == c.Id.ToString())">@c.Name</option>
         }
     </select>
 
@@ -68,8 +69,17 @@
                             @(p.Excerpt.Length > 60 ? p.Excerpt[..60] + "…" : p.Excerpt)
                         </div>
                     </td>
-                    <td><span class="cat-tag">@p.Category.Name</span></td>
-                    <td style="font-size:12px;color:var(--muted)">@p.Author.DisplayName</td>
+                    <td>
+                        @if (p.Category != null)
+                        {
+                            <span class="cat-tag">@p.Category.Name</span>
+                        }
+                        else
+                        {
+                            <span class="cat-tag" style="background: #333; color: #aaa;">Sem Categoria</span>
+                        }
+                    </td>
+                    <td style="font-size:12px;color:var(--muted)">@(p.Author?.DisplayName ?? "Sistema")</td>
                     <td style="font-size:12px;color:var(--muted);white-space:nowrap">
                         @p.CreatedAt.ToString("dd MMM yyyy")
                     </td>
@@ -101,7 +111,7 @@
                             }
 
                             <form asp-action="DeletePost" asp-route-id="@p.Id" method="post" style="display:inline"
-                                  onsubmit="return confirm('Excluir «@p.Title»? Esta ação é irreversível.')">
+                                onsubmit="return confirm('Excluir «@p.Title»? Esta ação é irreversível.')">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="tbl-btn del">✕</button>
                             </form>

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using ThrottleBlog.Models;
 
 namespace ThrottleBlog.ViewModels;
@@ -115,8 +116,10 @@ public class PostListViewModel
 // ─────────────────────────────────────────────
 //  ADMIN — POST FORM (CREATE / EDIT)
 // ─────────────────────────────────────────────
-public class PostFormViewModel
+public class PostFormViewModel : IValidatableObject
 {
+    private static readonly Regex ImagePathRegex = new(@"^/[\w\-./]+$", RegexOptions.Compiled);
+
     public int Id { get; set; }
 
     [Required(ErrorMessage = "O título é obrigatório")]
@@ -128,7 +131,6 @@ public class PostFormViewModel
 
     public string Content { get; set; } = string.Empty;
 
-    [Url(ErrorMessage = "Informe uma URL válida")]
     public string? FeaturedImage { get; set; }
 
     [Range(1, 120)]
@@ -145,6 +147,25 @@ public class PostFormViewModel
     public string TagsRaw { get; set; } = string.Empty;
 
     public List<Category> Categories { get; set; } = new();
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (!string.IsNullOrWhiteSpace(FeaturedImage) &&
+            !Uri.TryCreate(FeaturedImage, UriKind.Absolute, out _) &&
+            !ImagePathRegex.IsMatch(FeaturedImage))
+        {
+            yield return new ValidationResult(
+                "Informe uma URL válida ou um caminho começando com / (ex.: /uploads/...).",
+                [nameof(FeaturedImage)]);
+        }
+
+        if (Status == PostStatus.Published && string.IsNullOrWhiteSpace(FeaturedImage))
+        {
+            yield return new ValidationResult(
+                "Imagem de destaque é obrigatória para publicar.",
+                [nameof(FeaturedImage)]);
+        }
+    }
 }
 
 // ─────────────────────────────────────────────
@@ -218,15 +239,49 @@ public class CommentsViewModel
 }
 
 // ─────────────────────────────────────────────
-//  NEWSLETTER FORM (público)
+//  NEWSLETTER (público)
 // ─────────────────────────────────────────────
+public class NewsletterPageViewModel
+{
+    public BlogSettings Settings { get; set; } = null!;
+    public int          CommonCount  { get; set; }
+    public int          PremiumCount { get; set; }
+}
+
 public class NewsletterFormViewModel
 {
-    [Required]
+    [Required(ErrorMessage = "Informe seu nome")]
+    [StringLength(120)]
     public string Name  { get; set; } = string.Empty;
 
-    [Required, EmailAddress]
+    [Required(ErrorMessage = "Informe seu e-mail"), EmailAddress(ErrorMessage = "E-mail inválido")]
     public string Email { get; set; } = string.Empty;
+}
+
+public class PremiumNewsletterFormViewModel
+{
+    [Required(ErrorMessage = "Informe seu nome")]
+    [StringLength(120)]
+    public string Name  { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Informe seu e-mail"), EmailAddress(ErrorMessage = "E-mail inválido")]
+    public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Informe seu telefone")]
+    [Phone(ErrorMessage = "Telefone inválido")]
+    [StringLength(30)]
+    public string Phone { get; set; } = string.Empty;
+}
+
+public class AdminNewsletterListViewModel
+{
+    public List<NewsletterSubscriber> Subscribers  { get; set; } = new();
+    public string?                    SearchQuery  { get; set; }
+    public string?                    TierFilter   { get; set; }
+    public string?                    StatusFilter { get; set; }
+    public int                        CommonTotal  { get; set; }
+    public int                        PremiumTotal { get; set; }
+    public PaginationViewModel        Pagination   { get; set; } = null!;
 }
 
 // ─────────────────────────────────────────────

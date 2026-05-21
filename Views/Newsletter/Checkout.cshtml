@@ -1,0 +1,547 @@
+@model ThrottleBlog.ViewModels.NewsletterFormViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Assinar Premium";
+}
+
+<div class="checkout-page">
+    <div class="checkout-container container">
+        
+        <!-- LADO ESQUERDO: FORMULÁRIO E PAGAMENTO -->
+        <div class="checkout-form-section">
+            <h1 class="checkout-title">Checkout Premium</h1>
+            <p class="checkout-subtitle">Preencha seus dados e escolha o método de pagamento simulado.</p>
+
+            @if (TempData["NewsletterError"] is string error)
+            {
+                <div class="flash flash-error" style="border-radius: 4px; margin-bottom: 20px;">@error</div>
+            }
+
+            <form asp-controller="Newsletter" asp-action="ConfirmarPremium" method="post" id="checkoutForm">
+                @Html.AntiForgeryToken()
+                
+                <div class="form-group">
+                    <label class="form-label" asp-for="Name">Nome Completo</label>
+                    <input class="form-input" type="text" asp-for="Name" placeholder="Ex: João da Silva" required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" asp-for="Email">E-mail</label>
+                    <input class="form-input" type="email" asp-for="Email" placeholder="Ex: joao@email.com" required />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                    <small style="color: var(--muted); font-size:11px; margin-top:4px; display:block;">Este e-mail receberá os conteúdos exclusivos Premium.</small>
+                </div>
+
+                <!-- TABS DE MÉTODO DE PAGAMENTO -->
+                <div class="payment-methods">
+                    <label class="form-label">Forma de Pagamento (Simulada)</label>
+                    <div class="payment-tabs">
+                        <div class="pay-tab active" data-target="pix">
+                            <span class="tab-icon">⚡</span> Pix
+                        </div>
+                        <div class="pay-tab" data-target="card">
+                            <span class="tab-icon">💳</span> Cartão de Crédito
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTEÚDO DO PIX -->
+                <div class="payment-content active" id="pix-content">
+                    <div class="pix-instructions">
+                        <p>Pague de forma rápida e segura através do Pix. O acesso é liberado instantaneamente após a confirmação simulada.</p>
+                        
+                        <div class="qr-code-box">
+                            <!-- QR Code Mock em SVG -->
+                            <svg viewBox="0 0 100 100" width="160" height="160">
+                                <rect width="100" height="100" fill="#ffffff" />
+                                <!-- Cantos de ancoragem -->
+                                <rect x="5" y="5" width="20" height="20" fill="#000000" />
+                                <rect x="8" y="8" width="14" height="14" fill="#ffffff" />
+                                <rect x="11" y="11" width="8" height="8" fill="#000000" />
+                                
+                                <rect x="75" y="5" width="20" height="20" fill="#000000" />
+                                <rect x="78" y="8" width="14" height="14" fill="#ffffff" />
+                                <rect x="81" y="81" width="8" height="8" fill="#000000" />
+                                
+                                <rect x="5" y="75" width="20" height="20" fill="#000000" />
+                                <rect x="8" y="78" width="14" height="14" fill="#ffffff" />
+                                <rect x="11" y="81" width="8" height="8" fill="#000000" />
+
+                                <rect x="75" y="75" width="20" height="20" fill="#000000" />
+                                <rect x="78" y="78" width="14" height="14" fill="#ffffff" />
+                                <rect x="81" y="81" width="8" height="8" fill="#000000" />
+                                
+                                <!-- Blocos aleatórios mock do QR code -->
+                                <rect x="30" y="10" width="6" height="6" fill="#000000" />
+                                <rect x="45" y="5" width="10" height="5" fill="#000000" />
+                                <rect x="60" y="15" width="8" height="8" fill="#000000" />
+                                <rect x="35" y="30" width="15" height="5" fill="#000000" />
+                                <rect x="15" y="45" width="5" height="10" fill="#000000" />
+                                <rect x="30" y="50" width="10" height="10" fill="#000000" />
+                                <rect x="50" y="40" width="12" height="6" fill="#000000" />
+                                <rect x="70" y="35" width="5" height="15" fill="#000000" />
+                                <rect x="45" y="65" width="8" height="14" fill="#000000" />
+                                <rect x="10" y="60" width="12" height="4" fill="#000000" />
+                                <rect x="65" y="60" width="6" height="12" fill="#000000" />
+                                <rect x="30" y="75" width="10" height="10" fill="#000000" />
+                                <rect x="50" y="80" width="15" height="5" fill="#000000" />
+                                <rect x="70" y="65" width="4" height="6" fill="#000000" />
+                            </svg>
+                        </div>
+
+                        <div class="pix-copia-cola">
+                            <label class="form-label" style="font-size:12px;">Código Copia e Cola</label>
+                            <div class="copia-cola-input-group">
+                                <input type="text" class="form-input" id="pixCode" readonly value="00020101021226770014br.gov.bcb.pix2555pix.webriders.com.br/newsletter/premium/payment/9.905204000053039865802BR5920Webriders%20Blog6009SAO%20PAULO62070503***6304ED1D" />
+                                <button type="button" class="btn-copiar" id="btnCopiarPix">Copiar</button>
+                            </div>
+                            <span class="copiar-sucesso" id="copySuccessMsg">✓ Código copiado!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTEÚDO DO CARTÃO -->
+                <div class="payment-content" id="card-content">
+                    <div class="card-inputs">
+                        <div class="form-group">
+                            <label class="form-label">Número do Cartão</label>
+                            <input class="form-input" type="text" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" />
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Validade</label>
+                                <input class="form-input" type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CVV</label>
+                                <input class="form-input" type="text" id="cardCvv" placeholder="123" maxlength="3" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nome Impresso no Cartão</label>
+                            <input class="form-input" type="text" id="cardHolder" placeholder="Ex: JOAO D SILVA" />
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary btn-submit-checkout" style="width: 100%; margin-top: 30px;">
+                    ⚡ Concluir Assinatura Premium — R$ 9,90/mês
+                </button>
+                <p class="simulado-alert">⚠️ Esta é uma transação de teste/demonstração. Nenhum valor real será cobrado.</p>
+            </form>
+        </div>
+
+        <!-- LADO DIREITO: RESUMO DO PEDIDO -->
+        <div class="checkout-summary-section">
+            <h2 class="summary-title">Resumo do Pedido</h2>
+            <div class="summary-card">
+                <div class="summary-product">
+                    <div class="product-badge">Premium</div>
+                    <div class="product-info">
+                        <h3>Webriders Newsletter</h3>
+                        <p>Plano Mensal Recorrente</p>
+                    </div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row">
+                    <span>Mensalidade</span>
+                    <span>R$ 9,90</span>
+                </div>
+                <div class="summary-row">
+                    <span>Taxa de adesão</span>
+                    <span style="color: var(--success)">Grátis</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-total">
+                    <span>Total a Pagar</span>
+                    <span>R$ 9,90<span>/mês</span></span>
+                </div>
+                
+                <div class="summary-benefits">
+                    <h4>Vantagens Premium inclusas:</h4>
+                    <ul>
+                        <li>✓ Rotas exclusivas com GPX para GPS</li>
+                        <li>✓ Sem anúncios em todo o site</li>
+                        <li>✓ Acesso antecipado a reviews de motos</li>
+                        <li>✓ Grupo VIP no WhatsApp</li>
+                        <li>✓ Cupons de parceiros selecionados</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .checkout-page {
+            padding: 80px 0;
+            background: var(--black);
+            min-height: calc(100vh - 68px - 140px);
+        }
+
+        .checkout-container {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 60px;
+            align-items: start;
+        }
+
+        .checkout-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-style: italic;
+            font-size: 38px;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .checkout-subtitle {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .payment-methods {
+            margin: 30px 0 20px 0;
+        }
+
+        .payment-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .pay-tab {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 16px;
+            text-align: center;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--muted);
+        }
+
+        .pay-tab:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            color: var(--white);
+        }
+
+        .pay-tab.active {
+            border-color: var(--red);
+            background: rgba(232, 26, 26, 0.05);
+            color: var(--white);
+        }
+
+        .payment-content {
+            display: none;
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 30px;
+            margin-bottom: 20px;
+            clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15% 100%, 0 calc(100% - 15px));
+        }
+
+        .payment-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .pix-instructions {
+            text-align: center;
+        }
+
+        .pix-instructions p {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .qr-code-box {
+            display: inline-block;
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .pix-copia-cola {
+            text-align: left;
+        }
+
+        .copia-cola-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .copia-cola-input-group input {
+            background: rgba(0,0,0,0.2) !important;
+            border-color: var(--border) !important;
+            color: #777 !important;
+            font-family: monospace;
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .btn-copiar {
+            background: var(--red);
+            color: var(--white);
+            border: none;
+            padding: 0 20px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s;
+            clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+        }
+
+        .btn-copiar:hover {
+            background: var(--red-dark);
+        }
+
+        .copiar-sucesso {
+            display: none;
+            color: var(--success);
+            font-size: 12px;
+            margin-top: 6px;
+            font-weight: bold;
+        }
+
+        .btn-submit-checkout {
+            padding: 18px !important;
+            font-size: 15px !important;
+            box-shadow: 0 5px 15px var(--red-glow);
+        }
+
+        .simulado-alert {
+            font-size: 11px;
+            color: #d97706;
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        /* RESUMO DO PEDIDO */
+        .checkout-summary-section {
+            position: sticky;
+            top: 100px;
+        }
+
+        .summary-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-style: italic;
+            font-size: 24px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+
+        .summary-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 30px;
+            clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15% 100%, 0 calc(100% - 15px));
+        }
+
+        .summary-product {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .product-badge {
+            background: var(--red);
+            color: var(--white);
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 6px 12px;
+        }
+
+        .product-info h3 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 18px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .product-info p {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .summary-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 20px;
+            text-transform: uppercase;
+            color: var(--white);
+        }
+
+        .summary-total span span {
+            font-size: 12px;
+            color: var(--muted);
+            font-family: 'Barlow', sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-benefits {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 20px;
+            border-left: 2px solid var(--red);
+        }
+
+        .summary-benefits h4 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            color: var(--white);
+        }
+
+        .summary-benefits ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .summary-benefits li {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @@media (max-width: 900px) {
+            .checkout-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            .checkout-summary-section {
+                position: static;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Alternância de abas de pagamento
+            const tabs = document.querySelectorAll(".pay-tab");
+            const contents = document.querySelectorAll(".payment-content");
+
+            tabs.forEach(tab => {
+                tab.addEventListener("click", function() {
+                    tabs.forEach(t => t.classList.remove("active"));
+                    contents.forEach(c => c.classList.remove("active"));
+
+                    this.classList.add("active");
+                    const targetId = this.getAttribute("data-target") + "-content";
+                    document.getElementById(targetId).classList.add("active");
+                });
+            });
+
+            // Copiar código Pix
+            const btnCopiar = document.getElementById("btnCopiarPix");
+            const pixInput = document.getElementById("pixCode");
+            const copyMsg = document.getElementById("copySuccessMsg");
+
+            btnCopiar.addEventListener("click", function() {
+                pixInput.select();
+                pixInput.setSelectionRange(0, 99999); // para mobile
+                navigator.clipboard.writeText(pixInput.value).then(() => {
+                    copyMsg.style.display = "block";
+                    setTimeout(() => {
+                        copyMsg.style.display = "none";
+                    }, 3000);
+                });
+            });
+
+            // Formatação do cartão de crédito (visual apenas)
+            const cardInput = document.getElementById("cardNumber");
+            cardInput.addEventListener("input", function(e) {
+                let v = e.target.value.replace(/\D/g, '');
+                v = v.replace(/(\d{4})(?=\d)/g, '$1 ');
+                e.target.value = v;
+            });
+
+            const expiryInput = document.getElementById("cardExpiry");
+            expiryInput.addEventListener("input", function(e) {
+                let v = e.target.value.replace(/\D/g, '');
+                if (v.length > 2) {
+                    v = v.substring(0, 2) + '/' + v.substring(2, 4);
+                }
+                e.target.value = v;
+            });
+        });
+    </script>
+}

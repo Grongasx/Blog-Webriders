@@ -1,0 +1,64 @@
+@model ThrottleBlog.ViewModels.NewsletterPageViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Newsletter";
+}
+
+<section class="newsletter-page-hero">
+    <div class="container">
+        <span class="newsletter-tag">Newsletter Webriders</span>
+        <h1 class="newsletter-page-title">Escolha como quer<br>receber nosso conteúdo</h1>
+        <p class="newsletter-page-sub">
+            @Model.CommonCount assinantes comuns · @Model.PremiumCount assinantes premium
+        </p>
+    </div>
+</section>
+
+<section class="newsletter-plans-section">
+    <div class="container newsletter-plans-grid">
+
+        <div class="newsletter-plan newsletter-plan-common fade-up" id="comum">
+            <div class="plan-badge">Gratuito</div>
+            <h2 class="plan-title">Assinatura Comum</h2>
+            <p class="plan-desc">Receba as melhores matérias da semana no seu e-mail. Nome e e-mail — simples e direto.</p>
+            <ul class="plan-features">
+                <li>Resumo semanal de posts</li>
+                <li>Novidades do mundo das motos</li>
+                <li>Sem custo</li>
+            </ul>
+            <form asp-controller="Home" asp-action="Newsletter" method="post"
+                  class="newsletter-form newsletter-form-ajax" data-message-id="msg-common">
+                @Html.AntiForgeryToken()
+                <input class="form-input" type="text" name="Name" placeholder="Seu nome" required>
+                <input class="form-input" type="email" name="Email" placeholder="Seu e-mail" required>
+                <button type="submit" class="btn-primary" style="width:100%;justify-content:center">
+                    ▶ Inscrever-se grátis
+                </button>
+                <div id="msg-common" class="newsletter-message" role="status"></div>
+            </form>
+        </div>
+
+        <div class="newsletter-plan newsletter-plan-premium fade-up" id="premium">
+            <div class="plan-badge plan-badge-premium">Premium</div>
+            <h2 class="plan-title">Assinatura Premium</h2>
+            <p class="plan-desc">Conteúdo exclusivo, antecipado e benefícios para quem vive sobre duas rodas.</p>
+            <ul class="plan-features">
+                <li>Tudo da assinatura comum</li>
+                <li>Matérias exclusivas e antecipadas</li>
+                <li>Ofertas e parcerias selecionadas</li>
+            </ul>
+            <form asp-controller="Home" asp-action="NewsletterPremium" method="post"
+                  class="newsletter-form newsletter-form-ajax" data-message-id="msg-premium">
+                @Html.AntiForgeryToken()
+                <input class="form-input" type="text" name="Name" placeholder="Seu nome" required>
+                <input class="form-input" type="email" name="Email" placeholder="Seu e-mail" required>
+                <input class="form-input" type="tel" name="Phone" placeholder="WhatsApp / telefone" required>
+                <button type="submit" class="btn-primary" style="width:100%;justify-content:center">
+                    ★ Quero ser Premium
+                </button>
+                <div id="msg-premium" class="newsletter-message" role="status"></div>
+            </form>
+        </div>
+
+    </div>
+</section>

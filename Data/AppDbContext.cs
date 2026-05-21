@@ -72,6 +72,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable("NewsletterSubscribers");
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Tier).HasConversion<string>();
+            entity.HasIndex(e => e.Email).IsUnique();
         });
 
         // Configuração NewsletterQueue

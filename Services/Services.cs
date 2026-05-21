@@ -199,9 +199,18 @@ public class PostService : IPostService
     private IQueryable<Post> BasePublicQuery(string? category, string? search)
     {
         var q = _db.Posts.Include(p => p.Category).Include(p => p.Author)
+            .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
             .Where(p => p.Status == PostStatus.Published).AsQueryable();
         if (!string.IsNullOrWhiteSpace(category)) q = q.Where(p => p.Category.Slug == category);
-        if (!string.IsNullOrWhiteSpace(search))   q = q.Where(p => p.Title.Contains(search) || p.Excerpt.Contains(search));
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = $"%{search.Trim()}%";
+            q = q.Where(p =>
+                EF.Functions.ILike(p.Title, term) ||
+                EF.Functions.ILike(p.Excerpt, term) ||
+                EF.Functions.ILike(p.Content, term) ||
+                p.PostTags.Any(pt => EF.Functions.ILike(pt.Tag.Name, term)));
+        }
         return q;
     }
 
@@ -365,13 +374,65 @@ public class SettingsService : ISettingsService
     public async Task SaveAsync(BlogSettings settings) { _db.BlogSettings.Update(settings); await _db.SaveChangesAsync(); }
     public async Task SaveFromViewModelAsync(SettingsViewModel vm)
     {
+        // 1. Busca a configuração atual do banco
         var s = await GetAsync();
-        s.BlogName = vm.BlogName; s.Tagline = vm.Tagline; s.TopBarText = vm.TopBarText;
-        s.BlogUrl = vm.BlogUrl; s.NewsletterEnabled = vm.NewsletterEnabled;
-        s.CommentsEnabled = vm.CommentsEnabled; s.MaintenanceMode = vm.MaintenanceMode;
-        s.TickerEnabled = vm.TickerEnabled; s.FeaturedEnabled = vm.FeaturedEnabled;
-        s.Instagram = vm.Instagram; s.YouTube = vm.YouTube; s.Twitter = vm.Twitter; s.LinkedIn = vm.LinkedIn;
+
+        // 2. Mapeia todos os campos manualmente
+        s.BlogName = vm.BlogName;
+        s.Tagline = vm.Tagline;
+        s.TopBarText = vm.TopBarText;
+        s.BlogUrl = vm.BlogUrl;
+        
+        s.NewsletterEnabled = vm.NewsletterEnabled;
+        s.CommentsEnabled = vm.CommentsEnabled;
+        s.MaintenanceMode = vm.MaintenanceMode; // Agora o valor real chega aqui
+        s.TickerEnabled = vm.TickerEnabled;
+        s.FeaturedEnabled = vm.FeaturedEnabled;
+        
+        s.Instagram = vm.Instagram;
+        s.YouTube = vm.YouTube;
+        s.Twitter = vm.Twitter;
+        s.LinkedIn = vm.LinkedIn;
+
+        // 3. Salva no banco
         await SaveAsync(s);
+    }
+}
+// ════════════════════════════════════════════════════════════════
+//  Maintenances Services
+// ════════════════════════════════════════════════════════════════
+public class MaintenanceMiddleware
+{
+    private readonly RequestDelegate _next;
+
+    public MaintenanceMiddleware(RequestDelegate next) => _next = next;
+
+    public async Task InvokeAsync(HttpContext context, ISettingsService settings)
+    {
+        var path = context.Request.Path.Value?.ToLower();
+        
+        // Ignora o admin
+        if (path != null && path.StartsWith("/admin"))
+        {
+            await _next(context);
+            return;
+        }
+
+        // Busca o dado
+        var s = await settings.GetAsync();
+
+        // --- DEBUG: ADICIONE ISSO ---
+        Console.WriteLine($"--- DEBUG: O sistema leu MaintenanceMode como: {s?.MaintenanceMode} ---");
+        // ----------------------------
+
+        if (s != null && s.MaintenanceMode)
+        {
+            context.Response.StatusCode = 503;
+            await context.Response.WriteAsync("Estamos em manutenção. Voltaremos em breve!");
+            return;
+        }
+
+        await _next(context);
     }
 }
 
@@ -491,21 +552,165 @@ public class LocalImageUploadService : IImageUploadService
 // ════════════════════════════════════════════════════════════════
 //  NEWSLETTER SERVICE
 // ════════════════════════════════════════════════════════════════
+public enum NewsletterSubscribeOutcome
+{
+    Success,
+    AlreadySubscribed,
+    UpgradedToPremium,
+    Reactivated
+}
+
+public class NewsletterSubscribeResult
+{
+    public NewsletterSubscribeOutcome Outcome { get; init; }
+    public string Message { get; init; } = string.Empty;
+    public bool Success => Outcome is NewsletterSubscribeOutcome.Success
+        or NewsletterSubscribeOutcome.UpgradedToPremium
+        or NewsletterSubscribeOutcome.Reactivated;
+}
+
 public interface INewsletterService
 {
-    Task<bool> SubscribeAsync(string name, string email);
+    Task<NewsletterSubscribeResult> SubscribeAsync(string name, string email, NewsletterTier tier, string? phone = null);
+    Task<(List<NewsletterSubscriber> Items, int Total)> ListAsync(int page, int pageSize, string? search, string? tier, string? status);
+    Task<(int Common, int Premium)> CountByTierAsync(bool activeOnly = true);
+    Task<bool> SetActiveAsync(int id, bool isActive);
 }
 
 public class NewsletterService : INewsletterService
 {
     private readonly AppDbContext _db;
     public NewsletterService(AppDbContext db) => _db = db;
-    public async Task<bool> SubscribeAsync(string name, string email)
+
+    public async Task<NewsletterSubscribeResult> SubscribeAsync(string name, string email, NewsletterTier tier, string? phone = null)
     {
-        if (await _db.NewsletterSubscribers.AnyAsync(s => s.Email == email && s.IsActive)) return false;
-        _db.NewsletterSubscribers.Add(new NewsletterSubscriber { Name = name, Email = email });
+        var normalized = email.Trim().ToLowerInvariant();
+        var existing = await _db.NewsletterSubscribers
+            .FirstOrDefaultAsync(s => s.Email == normalized);
+
+        if (tier == NewsletterTier.Premium && string.IsNullOrWhiteSpace(phone))
+        {
+            return new NewsletterSubscribeResult
+            {
+                Outcome = NewsletterSubscribeOutcome.AlreadySubscribed,
+                Message = "Telefone é obrigatório para assinatura Premium."
+            };
+        }
+
+        if (existing is not null)
+        {
+            if (!existing.IsActive)
+            {
+                ApplySubscription(existing, name, tier, phone);
+                await _db.SaveChangesAsync();
+                return new NewsletterSubscribeResult
+                {
+                    Outcome = NewsletterSubscribeOutcome.Reactivated,
+                    Message = tier == NewsletterTier.Premium
+                        ? "Bem-vindo de volta ao Webriders Premium!"
+                        : "Inscrição reativada! Bem-vindo ao Webriders."
+                };
+            }
+
+            if (tier == NewsletterTier.Premium && existing.Tier == NewsletterTier.Common)
+            {
+                ApplySubscription(existing, name, NewsletterTier.Premium, phone);
+                await _db.SaveChangesAsync();
+                return new NewsletterSubscribeResult
+                {
+                    Outcome = NewsletterSubscribeOutcome.UpgradedToPremium,
+                    Message = "Upgrade para Premium realizado! Você receberá conteúdos exclusivos."
+                };
+            }
+
+            if (existing.Tier == NewsletterTier.Premium && tier == NewsletterTier.Common)
+            {
+                return new NewsletterSubscribeResult
+                {
+                    Outcome = NewsletterSubscribeOutcome.AlreadySubscribed,
+                    Message = "Este e-mail já possui assinatura Premium."
+                };
+            }
+
+            return new NewsletterSubscribeResult
+            {
+                Outcome = NewsletterSubscribeOutcome.AlreadySubscribed,
+                Message = "Este e-mail já está cadastrado."
+            };
+        }
+
+        _db.NewsletterSubscribers.Add(new NewsletterSubscriber
+        {
+            Name  = name.Trim(),
+            Email = normalized,
+            Tier  = tier,
+            Phone = tier == NewsletterTier.Premium ? phone?.Trim() : null
+        });
+        await _db.SaveChangesAsync();
+
+        return new NewsletterSubscribeResult
+        {
+            Outcome = NewsletterSubscribeOutcome.Success,
+            Message = tier == NewsletterTier.Premium
+                ? "Assinatura Premium confirmada! Em breve você receberá novidades exclusivas."
+                : "Inscrição realizada! Bem-vindo ao Webriders."
+        };
+    }
+
+    public async Task<(List<NewsletterSubscriber> Items, int Total)> ListAsync(
+        int page, int pageSize, string? search, string? tier, string? status)
+    {
+        var q = _db.NewsletterSubscribers.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = $"%{search.Trim()}%";
+            q = q.Where(s =>
+                EF.Functions.ILike(s.Name, term) ||
+                EF.Functions.ILike(s.Email, term) ||
+                (s.Phone != null && EF.Functions.ILike(s.Phone, term)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(tier) && Enum.TryParse<NewsletterTier>(tier, true, out var t))
+            q = q.Where(s => s.Tier == t);
+
+        if (status == "active")   q = q.Where(s => s.IsActive);
+        if (status == "inactive") q = q.Where(s => !s.IsActive);
+
+        var total = await q.CountAsync();
+        var items = await q.OrderByDescending(s => s.SubscribedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, total);
+    }
+
+    public async Task<(int Common, int Premium)> CountByTierAsync(bool activeOnly = true)
+    {
+        var q = _db.NewsletterSubscribers.AsQueryable();
+        if (activeOnly) q = q.Where(s => s.IsActive);
+        var common  = await q.CountAsync(s => s.Tier == NewsletterTier.Common);
+        var premium = await q.CountAsync(s => s.Tier == NewsletterTier.Premium);
+        return (common, premium);
+    }
+
+    public async Task<bool> SetActiveAsync(int id, bool isActive)
+    {
+        var sub = await _db.NewsletterSubscribers.FindAsync(id);
+        if (sub is null) return false;
+        sub.IsActive = isActive;
         await _db.SaveChangesAsync();
         return true;
+    }
+
+    private static void ApplySubscription(NewsletterSubscriber sub, string name, NewsletterTier tier, string? phone)
+    {
+        sub.Name         = name.Trim();
+        sub.Tier         = tier;
+        sub.Phone        = tier == NewsletterTier.Premium ? phone?.Trim() : sub.Phone;
+        sub.IsActive     = true;
+        sub.SubscribedAt = DateTime.UtcNow;
     }
 }
 

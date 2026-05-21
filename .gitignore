@@ -1,0 +1,15 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Claude Code (local only)
+CLAUDE.local.md
+.claude/settings.local.json
+
+## Secrets
+.env
+.env.*
+appsettings.Development.json

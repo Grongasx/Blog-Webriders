@@ -3,15 +3,6 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = null; // home não precisa de prefixo
 
-    // ── FUNÇÃO AUXILIAR DE ROTAS ──
-    // Essa função lê a categoria e decide para qual Controller o link deve ir
-    string GetController(string slug) => slug?.ToLower() switch {
-        "novidades" => "Novidades",
-        "rotas"     => "Rotas",
-        "reviews"   => "Reviews",
-        "eventos"   => "Eventos",
-        _           => "Home"
-    };
 }
 
 @* ── HERO / FEATURED GRID ── *@
@@ -21,11 +12,8 @@
         <div class="featured-grid container">
             
             @* Post Grande *@
-            @{ 
-                var large = Model.FeaturedPosts.First(); 
-                var largeCtrl = GetController(large.Category.Slug);
-            }
-            <a href="@Url.Action("Detail", largeCtrl, new { slug = large.Slug })" class="post-card large">
+            @{ var large = Model.FeaturedPosts.First(); }
+            <a asp-controller="Home" asp-action="Detail" asp-route-slug="@large.Slug" class="post-card large">
                 <div class="card-img-wrap">
                     <img class="card-img" src="@large.FeaturedImage" alt="@large.Title">
                 </div>
@@ -46,8 +34,7 @@
             @* Posts Menores *@
             @foreach (var p in Model.FeaturedPosts.Skip(1).Take(2))
             {
-                var smallCtrl = GetController(p.Category.Slug);
-                <a href="@Url.Action("Detail", smallCtrl, new { slug = p.Slug })" class="post-card small">
+                <a asp-controller="Home" asp-action="Detail" asp-route-slug="@p.Slug" class="post-card small">
                     <div class="card-img-wrap">
                         <img class="card-img" src="@p.FeaturedImage" alt="@p.Title">
                     </div>
@@ -78,8 +65,7 @@
         <div class="posts-grid fade-up">
             @foreach (var p in Model.LatestPosts)
             {
-                var postCtrl = GetController(p.Category.Slug);
-                <a href="@Url.Action("Detail", postCtrl, new { slug = p.Slug })" class="article-card">
+                <a asp-controller="Home" asp-action="Detail" asp-route-slug="@p.Slug" class="article-card">
                     <div class="article-img-wrap">
                         <img class="article-img" src="@p.FeaturedImage" alt="@p.Title">
                         <span class="article-cat">@p.Category.Name</span>
@@ -110,11 +96,14 @@
         <div class="categories-grid fade-up">
             @foreach (var c in Model.Categories)
             {
-                var catCtrl = GetController(c.Slug);
-                var actionName = catCtrl == "Home" ? "Category" : "Index";
-                var routeSlug = catCtrl == "Home" ? c.Slug : null;
-
-                <a href="@Url.Action(actionName, catCtrl, new { slug = routeSlug })" class="cat-card">
+                var catCtrl = c.Slug?.ToLower() switch {
+                    "novidades" => "Novidades",
+                    "rotas"     => "Rotas",
+                    "reviews"   => "Reviews",
+                    "eventos"   => "Eventos",
+                    _           => (string?)null
+                };
+                <a href="@(catCtrl is not null ? Url.Action("Index", catCtrl) : Url.Action("Category", "Home", new { slug = c.Slug }))" class="cat-card">
                     <img class="cat-img" src="@c.ImageUrl" alt="@c.Name">
                     <div class="cat-overlay"></div>
                     <div class="cat-label">
@@ -138,14 +127,18 @@
                     <h2 class="newsletter-title">Acelere<br>seu feed</h2>
                     <p class="newsletter-desc">Receba toda semana as melhores matérias direto no seu e-mail.</p>
                 </div>
-                <form asp-controller="Home" asp-action="Newsletter" method="post" class="newsletter-form">
+                <form asp-controller="Home" asp-action="Newsletter" method="post" class="newsletter-form newsletter-form-ajax" data-message-id="newsletter-message">
                     @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnTo" value="Index">
                     <input class="form-input" type="text"  name="Name"  placeholder="Seu nome" required>
                     <input class="form-input" type="email" name="Email" placeholder="Seu melhor e-mail" required>
                     <button type="submit" class="btn-primary" style="width:100%;justify-content:center">
                         ▶ Quero Receber Gratuitamente
                     </button>
-                    <p style="font-size:11px;color:var(--muted);text-align:center">Sem spam. Cancele quando quiser.</p>
+                    <div id="newsletter-message" class="newsletter-message" role="status"></div>
+                    <p style="font-size:11px;color:var(--muted);text-align:center">
+                        Sem spam. <a asp-controller="Home" asp-action="NewsletterPage" asp-fragment="premium" style="color:var(--red)">Conheça o plano Premium →</a>
+                    </p>
                 </form>
             </div>
         </div>

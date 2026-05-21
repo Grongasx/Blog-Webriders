@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using ThrottleBlog.Models;
 using ThrottleBlog.Services;
 using ThrottleBlog.ViewModels;
 
@@ -9,21 +10,27 @@ namespace ThrottleBlog.Controllers;
 /// </summary>
 public class HomeController : Controller
 {
-    private readonly IPostService       _posts;
-    private readonly ICategoryService   _categories;
-    private readonly ISettingsService   _settings;
-    private readonly INewsletterService _newsletter;
+    private readonly IPostService           _posts;
+    private readonly ICategoryService       _categories;
+    private readonly ISettingsService       _settings;
+    private readonly INewsletterService     _newsletter;
+    private readonly IMarkdownRenderer      _markdown;
+    private readonly IProductBlockRenderer  _productRenderer; // ← NOVO
 
     public HomeController(
-        IPostService       posts,
-        ICategoryService   categories,
-        ISettingsService   settings,
-        INewsletterService newsletter)
+        IPostService            posts,
+        ICategoryService        categories,
+        ISettingsService        settings,
+        INewsletterService      newsletter,
+        IMarkdownRenderer       markdown,
+        IProductBlockRenderer   productRenderer) // ← NOVO
     {
-        _posts      = posts;
-        _categories = categories;
-        _settings   = settings;
-        _newsletter = newsletter;
+        _posts           = posts;
+        _categories      = categories;
+        _settings        = settings;
+        _newsletter      = newsletter;
+        _markdown        = markdown;
+        _productRenderer = productRenderer; // ← NOVO
     }
 
     // GET /
@@ -38,7 +45,6 @@ public class HomeController : Controller
             Categories    = await _categories.GetAllAsync(),
         };
 
-        // Se não há posts em destaque, usa os 3 mais recentes para o hero
         if (!vm.FeaturedPosts.Any())
             vm.FeaturedPosts = vm.LatestPosts.Take(3).ToList();
 
@@ -52,7 +58,10 @@ public class HomeController : Controller
         var post = await _posts.GetBySlugAsync(slug);
         if (post is null) return NotFound();
 
-        var html = Markdig.Markdown.ToHtml(post.Content ?? "");
+        // ── CORREÇÃO: expande :::produto URL ::: → HTML ANTES do Markdown render ──
+        var processedContent = await _productRenderer.ExpandProductBlocksAsync(post.Content);
+        var html = _markdown.ToHtml(processedContent);
+        // ─────────────────────────────────────────────────────────────────────────
 
         var vm = new PostDetailViewModel
         {
@@ -69,50 +78,42 @@ public class HomeController : Controller
     [Route("categoria/{slug}")]
     public async Task<IActionResult> Category(string slug, int page = 1)
     {
-        // 1. Define o tamanho da página (resolve o erro CS0103)
         const int pageSize = 9;
 
-        // 2. Mapeia para os novos controllers
-        string targetController = slug?.ToLower() switch
+        string? targetController = slug?.ToLower() switch
         {
             "novidades" => "Novidades",
-            "rotas" => "Rotas",
-            "reviews" => "Reviews",
-            "eventos" => "Eventos",
-            _ => null
+            "rotas"     => "Rotas",
+            "reviews"   => "Reviews",
+            "eventos"   => "Eventos",
+            _           => null
         };
 
-        // 3. Se for uma categoria especial, redireciona para o controller dela
         if (targetController != null)
-        {
             return RedirectToAction("Index", targetController, new { page });
-        }
 
-        // 4. Se não for especial, busca a categoria genérica
-        var cat = await _categories.GetBySlugAsync(slug);
+        var cat = await _categories.GetBySlugAsync(slug!);
         if (cat is null) return NotFound();
 
         var total = await _posts.CountPublishedAsync(slug);
-        var posts = await _posts.GetPublishedAsync(page, pageSize, slug);
+        var posts = await _posts.GetPublishedAsync(page, 10, slug);
 
         var vm = new CategoryViewModel
         {
-            Category = cat,
-            Settings = await _settings.GetAsync(),
-            Posts = posts,
+            Category   = cat,
+            Settings   = await _settings.GetAsync(),
+            Posts      = posts,
             Pagination = new PaginationViewModel
             {
                 CurrentPage = page,
-                TotalPages = (int)Math.Ceiling((double)total / pageSize),
-                TotalItems = total,
-                PageSize = pageSize
+                TotalPages  = (int)Math.Ceiling((double)total / pageSize),
+                TotalItems  = total,
+                PageSize    = pageSize
             }
         };
-
-        // Certifique-se de que o arquivo Views/Home/Category.cshtml existe!
         return View(vm);
     }
-    
+
     // GET /buscar?q=honda&page=1
     [Route("buscar")]
     public async Task<IActionResult> Search(string? q, int page = 1)
@@ -124,35 +125,72 @@ public class HomeController : Controller
         var total = await _posts.CountPublishedAsync(search: q);
         var posts = await _posts.GetPublishedAsync(page, pageSize, search: q);
 
-        ViewBag.Query    = q;
-        ViewBag.Total    = total;
-        ViewBag.Settings = await _settings.GetAsync();
-        ViewBag.Posts    = posts;
-        ViewBag.Pagination = new PaginationViewModel
+        var vm = new SearchViewModel
         {
-            CurrentPage = page,
-            TotalPages  = (int)Math.Ceiling((double)total / pageSize),
-            TotalItems  = total,
-            PageSize    = pageSize
+            Query      = q.Trim(),
+            Posts      = posts,
+            Total      = total,
+            Settings   = await _settings.GetAsync(),
+            Pagination = new PaginationViewModel
+            {
+                CurrentPage = page,
+                TotalPages  = (int)Math.Ceiling((double)total / pageSize),
+                TotalItems  = total,
+                PageSize    = pageSize
+            }
         };
-        return View();
+        return View(vm);
     }
 
-    // POST /newsletter
+    // GET /newsletter
+    [Route("newsletter")]
+    public async Task<IActionResult> NewsletterPage()
+    {
+        var settings = await _settings.GetAsync();
+        var counts   = await _newsletter.CountByTierAsync();
+        return View("Newsletter", new NewsletterPageViewModel
+        {
+            Settings     = settings,
+            CommonCount  = counts.Common,
+            PremiumCount = counts.Premium
+        });
+    }
+
+    // POST /newsletter (assinatura comum)
     [HttpPost("newsletter")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Newsletter(NewsletterFormViewModel vm)
+    public async Task<IActionResult> Newsletter(NewsletterFormViewModel vm, string? returnTo = null)
     {
+        var isAjax  = IsAjaxRequest();
+        var redirect = returnTo == "Index" ? nameof(Index) : nameof(NewsletterPage);
         if (!ModelState.IsValid)
-        {
-            TempData["NewsletterError"] = "Preencha nome e e-mail válidos.";
-            return RedirectToAction(nameof(Index));
-        }
-        var ok = await _newsletter.SubscribeAsync(vm.Name, vm.Email);
-        TempData[ok ? "NewsletterSuccess" : "NewsletterError"] = ok
-            ? "Inscrição realizada! Bem-vindo ao Webriders 🏍️"
-            : "Este e-mail já está cadastrado.";
-        return RedirectToAction(nameof(Index));
+            return NewsletterFeedback(isAjax, false, "Preencha nome e e-mail válidos.", redirect);
+
+        var result = await _newsletter.SubscribeAsync(vm.Name, vm.Email, NewsletterTier.Common);
+        return NewsletterFeedback(isAjax, result.Success, result.Message, redirect);
+    }
+
+    // POST /newsletter/premium
+    [HttpPost("newsletter/premium")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> NewsletterPremium(PremiumNewsletterFormViewModel vm)
+    {
+        var isAjax = IsAjaxRequest();
+        if (!ModelState.IsValid)
+            return NewsletterFeedback(isAjax, false, "Preencha todos os campos corretamente.", nameof(NewsletterPage));
+
+        var result = await _newsletter.SubscribeAsync(vm.Name, vm.Email, NewsletterTier.Premium, vm.Phone);
+        return NewsletterFeedback(isAjax, result.Success, result.Message, nameof(NewsletterPage));
+    }
+
+    private bool IsAjaxRequest()
+        => string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.Ordinal);
+
+    private IActionResult NewsletterFeedback(bool isAjax, bool success, string message, string redirectAction = nameof(NewsletterPage))
+    {
+        if (isAjax) return Json(new { success, message });
+        TempData[success ? "NewsletterSuccess" : "NewsletterError"] = message;
+        return RedirectToAction(redirectAction);
     }
 
     // GET /erro/{code}

@@ -34,7 +34,11 @@
             <li><a asp-controller="Home" asp-action="Category" asp-route-slug="reviews">Reviews</a></li>
             <li><a asp-controller="Home" asp-action="Category" asp-route-slug="eventos">Eventos</a></li>
         </ul>
-        <a class="nav-cta" asp-controller="Home" asp-action="Index" asp-fragment="newsletter">Newsletter</a>
+        <form class="nav-search" asp-controller="Home" asp-action="Search" method="get">
+            <input type="search" name="q" placeholder="Buscar…" aria-label="Buscar posts" required>
+            <button type="submit" aria-label="Buscar">🔍</button>
+        </form>
+        <a class="nav-cta" asp-controller="Home" asp-action="NewsletterPage">Newsletter</a>
     </nav>
 
     <main>
