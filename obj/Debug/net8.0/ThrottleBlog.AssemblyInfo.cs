@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ThrottleBlog")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+157047b9730587c973f1a15da92bc04a38500359")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8d17248e2c97a58831d1b0efc80a75fb721f0cea")]
 [assembly: System.Reflection.AssemblyProductAttribute("ThrottleBlog")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ThrottleBlog")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -425,19 +425,61 @@ public class AdminController : Controller
         return View(vm);
     }
 
-    // POST /admin/configuracoes
-    [HttpPost("configuracoes")]
+    // POST /admin/configuracoes/blog
+    [HttpPost("configuracoes/blog")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Settings(SettingsViewModel vm)
+    public async Task<IActionResult> SaveBlogInfo(string blogName, string tagline, string topBarText, string blogUrl)
     {
-        if (!ModelState.IsValid)
+        if (string.IsNullOrWhiteSpace(blogName))
         {
-            return View(vm);
+            TempData["Error"] = "O nome do blog é obrigatório.";
+            return RedirectToAction(nameof(Settings));
         }
 
-        await _settings.SaveFromViewModelAsync(vm);
+        var s = await _settings.GetAsync();
+        s.BlogName = blogName;
+        s.Tagline = tagline ?? string.Empty;
+        s.TopBarText = topBarText ?? string.Empty;
+        s.BlogUrl = blogUrl ?? string.Empty;
 
-        TempData["Success"] = "Configurações salvas com sucesso!";
+        await _settings.SaveAsync(s);
+
+        TempData["Success"] = "Informações do blog atualizadas!";
+        return RedirectToAction(nameof(Settings));
+    }
+
+    // POST /admin/configuracoes/funcionalidades
+    [HttpPost("configuracoes/funcionalidades")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveFeatureSettings(bool newsletterEnabled, bool commentsEnabled, bool maintenanceMode, bool tickerEnabled, bool featuredEnabled)
+    {
+        var s = await _settings.GetAsync();
+        s.NewsletterEnabled = newsletterEnabled;
+        s.CommentsEnabled = commentsEnabled;
+        s.MaintenanceMode = maintenanceMode;
+        s.TickerEnabled = tickerEnabled;
+        s.FeaturedEnabled = featuredEnabled;
+
+        await _settings.SaveAsync(s);
+
+        TempData["Success"] = "Funcionalidades atualizadas!";
+        return RedirectToAction(nameof(Settings));
+    }
+
+    // POST /admin/configuracoes/social
+    [HttpPost("configuracoes/social")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveSocialSettings(string? instagram, string? youtube, string? twitter, string? linkedIn)
+    {
+        var s = await _settings.GetAsync();
+        s.Instagram = instagram;
+        s.YouTube = youtube;
+        s.Twitter = twitter;
+        s.LinkedIn = linkedIn;
+
+        await _settings.SaveAsync(s);
+
+        TempData["Success"] = "Redes sociais atualizadas!";
         return RedirectToAction(nameof(Settings));
     }
 

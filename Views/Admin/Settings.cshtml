@@ -5,14 +5,15 @@
 }
 
 <div class="settings-grid">
-    <form asp-action="Settings" method="post">
+    
+    @* BLOCO 1: Informações do Blog *@
+    <form asp-controller="Admin" asp-action="SaveBlogInfo" method="post">
         @Html.AntiForgeryToken()
-
         <div class="settings-section">
             <div class="settings-section-title">Informações do Blog</div>
             <div class="form-group" style="margin-bottom:14px">
                 <label class="form-label">Nome do Blog</label>
-                <input class="form-input" asp-for="BlogName" placeholder="Webriders">
+                <input class="form-input" asp-for="BlogName" placeholder="Webriders" required>
             </div>
             <div class="form-group" style="margin-bottom:14px">
                 <label class="form-label">Tagline</label>
@@ -26,8 +27,13 @@
                 <label class="form-label">URL do Blog</label>
                 <input class="form-input" asp-for="BlogUrl" type="url" placeholder="https://webriders.com.br">
             </div>
+            <button type="submit" class="btn-primary">✓ Salvar Informações</button>
         </div>
+    </form>
 
+    @* BLOCO 2: Funcionalidades *@
+    <form asp-controller="Admin" asp-action="SaveFeatureSettings" method="post">
+        @Html.AntiForgeryToken()
         <div class="settings-section">
             <div class="settings-section-title">Funcionalidades</div>
             @{
@@ -38,9 +44,9 @@
                             <div class="toggle-label">@label</div>
                             <div class="toggle-desc">@desc</div>
                         </div>
-                        <input type="hidden" name="@propName" value="false">
-                        <div class="toggle @(value ? "on" : "")" onclick="toggleCheck(this, '@propName')"></div>
                         <input type="checkbox" name="@propName" value="true" @(value ? "checked" : "") style="display:none" id="cb-@propName">
+                        <div class="toggle @(value ? "on" : "")" onclick="toggleCheck(this, '@propName')"></div>
+                        <input type="hidden" name="@propName" value="false">
                     </div>
                 }
             }
@@ -49,8 +55,14 @@
             @{ ToggleRow("MaintenanceMode", "Modo manutenção", "Blog visível apenas para admin", Model.MaintenanceMode); }
             @{ ToggleRow("TickerEnabled", "Ticker de notícias", "Barra animada no topo", Model.TickerEnabled); }
             @{ ToggleRow("FeaturedEnabled", "Posts em destaque", "Seção hero na home", Model.FeaturedEnabled); }
+            
+            <button type="submit" class="btn-primary" style="margin-top:20px">✓ Salvar Funcionalidades</button>
         </div>
+    </form>
 
+    @* BLOCO 3: Redes Sociais *@
+    <form asp-controller="Admin" asp-action="SaveSocialSettings" method="post">
+        @Html.AntiForgeryToken()
         <div class="settings-section">
             <div class="settings-section-title">Redes Sociais</div>
             <div class="form-group" style="margin-bottom:14px">
@@ -70,9 +82,32 @@
                 <input class="form-input" asp-for="LinkedIn" placeholder="https://linkedin.com/company/webriders">
             </div>
             
-            <button type="submit" class="btn-primary">✓ Salvar Todas as Configurações</button>
+            <button type="submit" class="btn-primary">✓ Salvar Redes Sociais</button>
         </div>
     </form>
+
+    @* BLOCO 4: Alterar Credenciais *@
+    <form asp-controller="Admin" asp-action="ChangePassword" method="post">
+        @Html.AntiForgeryToken()
+        <div class="settings-section">
+            <div class="settings-section-title">Alterar Credenciais</div>
+            <div class="form-group" style="margin-bottom:14px">
+                <label class="form-label">Usuário</label>
+                <input class="form-input" name="UserName" value="@User.Identity?.Name" required placeholder="Nome de usuário do Admin">
+            </div>
+            <div class="form-group" style="margin-bottom:14px">
+                <label class="form-label">Nova Senha</label>
+                <input class="form-input" name="NewPassword" type="password" placeholder="Mantenha em branco para não alterar">
+            </div>
+            <div class="form-group" style="margin-bottom:20px">
+                <label class="form-label">Confirmar Nova Senha</label>
+                <input class="form-input" name="ConfirmPassword" type="password" placeholder="Confirme a nova senha">
+            </div>
+            
+            <button type="submit" class="btn-primary">✓ Atualizar Credenciais</button>
+        </div>
+    </form>
+
 </div>
 
 @section Scripts {
