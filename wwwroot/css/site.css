@@ -678,11 +678,13 @@ footer { background: var(--dark); border-top: 1px solid var(--border); padding: 
   border: 1px solid #3a3a3a;
 }
 
+/* Usando uma especificidade maior para ignorar a regra padrão de links */
+.post-content a.product-block-btn,
 .product-block-btn {
   display: inline-block;
   background: #ff3c00;
-  color: #fff;
-  text-decoration: none;
+  color: #ffffff !important; 
+  text-decoration: none !important;
   padding: 7px 14px;
   font-size: 12px;
   font-weight: bold;
@@ -692,9 +694,46 @@ footer { background: var(--dark); border-top: 1px solid var(--border); padding: 
   align-self: flex-start;
   margin-top: 4px;
 }
-.product-block-btn:hover { background: #cc3000; color: #fff; }
+
+.post-content a.product-block-btn:hover,
+.product-block-btn:hover { 
+  background: #cc3000; 
+  color: #ffffff !important; 
+}
 
 @media (max-width: 480px) {
   .product-block-card  { flex-direction: column; }
   .product-block-img   { width: 100%; height: 180px; }
+}
+
+/* ── TABELAS NO CONTEÚDO DO POST ── */
+.post-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 32px 0;
+  font-size: 15px;
+  background: var(--card);
+}
+
+.post-content th {
+  background: rgba(10, 10, 10, 0.5);
+  color: var(--white);
+  padding: 12px 16px;
+  text-align: left;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--red);
+}
+
+.post-content td {
+  padding: 12px 16px;
+  color: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid var(--border);
+}
+
+.post-content tbody tr:last-child td {
+  border-bottom: none;
 }
