@@ -24,18 +24,34 @@
 
     <div class="form-topbar">
         <div>
-            <h2 style="margin:0; font-size:15px; color:#fff; font-weight:700;">@ViewData["Title"]</h2>
-            <span style="font-size:11px; color:#555;">@(isEdit ? "Editando post existente" : "Criando novo post")</span>
+            <h2>@ViewData["Title"]</h2>
+            <div class="form-topbar-meta">
+                <span class="status-pill @(Model.Status.ToString() == "Published" ? "published" : "draft")" id="status-pill">
+                    @(Model.Status.ToString() == "Published" ? "Publicado" : "Rascunho")
+                </span>
+                <span class="form-topbar-timestamp">@(isEdit ? "Editando post existente" : "Criando novo post")</span>
+            </div>
         </div>
-        <div style="display:flex; gap:8px; align-items:center;">
+        <div class="form-topbar-actions">
             <a href="/admin/posts" class="btn-secondary">← Voltar</a>
             <button type="submit" class="btn-primary">✓ Salvar Post</button>
         </div>
     </div>
 
+    
+@* Throttle strip — progresso de leitura ligado à contagem de palavras  *@
+
+    <div class="throttle-strip">
+        <div class="throttle-track"><div class="throttle-fill" id="throttle-fill" style="width:0%"></div></div>
+        <div class="throttle-labels">
+            <span id="throttle-words">0 palavras</span>
+            <span id="throttle-time">leitura ~0min</span>
+        </div>
+    </div>
+
     <div asp-validation-summary="ModelOnly" style="margin-top:10px; background:#1a0500; border:1px solid #ff3c00; color:#ff3c00; padding:10px 14px; border-radius:5px; font-size:13px;"></div>
 
-    <div class="pf-grid" style="margin-top:14px;">
+    <div class="pf-grid">
 
         
 @* COLUNA PRINCIPAL  *@
@@ -112,7 +128,7 @@ Cole um link webriders.com.br para gerar card de produto automaticamente"></text
 
                 <div class="form-group" style="margin-bottom:10px;">
                     <label class="form-label">Status</label>
-                    <select class="filter-select" asp-for="Status">
+                    <select class="filter-select" asp-for="Status" id="status-select">
                         <option value="Draft">Rascunho</option>
                         <option value="Published">Publicado</option>
                     </select>
@@ -135,7 +151,7 @@ Cole um link webriders.com.br para gerar card de produto automaticamente"></text
 
                 <div class="form-group">
                     <label class="form-label">Tempo de Leitura (min)</label>
-                    <input class="form-input" asp-for="ReadingTime" type="number" min="1" placeholder="Ex: 5" />
+                    <input class="form-input" asp-for="ReadingTime" type="number" min="1" placeholder="Ex: 5" id="reading-time-input" />
                 </div>
             </div>
 
@@ -181,6 +197,91 @@ Cole um link webriders.com.br para gerar card de produto automaticamente"></text
 
                 <input type="hidden" asp-for="FeaturedImage" id="featured-image-input" />
 
+
+<div class="form-group">
+    <label asp-for="GalleryImages">
+        Imagens da Galeria
+        <small class="text-muted">(URLs separadas por vírgula — opcionais)</small>
+    </label>
+
+    @* Textarea facilita colar várias URLs *@
+    <textarea asp-for="GalleryImages"
+              class="form-control"
+              rows="3"
+              placeholder="https://cdn.exemplo.com/foto1.jpg, /uploads/foto2.webp, ..."></textarea>
+
+    <span asp-validation-for="GalleryImages" class="text-danger"></span>
+
+    <small class="form-text text-muted">
+        A primeira imagem do carrossel é sempre a <strong>Imagem de Destaque</strong>.
+        Adicione aqui imagens extras para compor a galeria (máx. 4000 chars).
+    </small>
+</div>
+
+@* ── Preview dinâmico das URLs digitadas (opcional, JS puro) ── *@
+<div id="galleryPreview" class="gallery-preview" style="display:none">
+    <p class="preview-label">Preview da galeria:</p>
+    <div id="galleryThumbsWrap" class="gallery-thumbs"></div>
+</div>
+
+@* ── CSS do preview ── *@
+<style>
+    .gallery-preview    { margin-top: .5rem; }
+    .preview-label      { font-size: .8rem; color: #666; margin-bottom: .25rem; }
+    .gallery-thumbs     { display: flex; flex-wrap: wrap; gap: 8px; }
+    .gallery-thumbs img {
+        width: 80px;
+        height: 56px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 2px solid #ddd;
+    }
+    .gallery-thumbs img.error { border-color: #e74c3c; opacity: .4; }
+</style>
+
+@* ── Script do preview ── *@
+<script>
+(function () {
+    const galleryTextarea = document.getElementById('GalleryImages');
+    const preview  = document.getElementById('galleryPreview');
+    const thumbs   = document.getElementById('galleryThumbsWrap');
+    const featInput = document.getElementById('featured-image-input'); // hidden field, não o url-input
+
+    if (!galleryTextarea) return;
+
+    function renderGalleryPreview() {
+        const urls = [];
+        const feat = featInput?.value?.trim();
+        if (feat) urls.push(feat);
+
+        galleryTextarea.value.split(',').forEach(u => {
+            const t = u.trim();
+            if (t) urls.push(t);
+        });
+
+        thumbs.innerHTML = '';
+
+        if (urls.length === 0) {
+            preview.style.display = 'none';
+            return;
+        }
+
+        preview.style.display = 'block';
+        urls.forEach((url, i) => {
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = `Imagem ${i + 1}`;
+            img.title = url;
+            img.addEventListener('error', () => img.classList.add('error'));
+            thumbs.appendChild(img);
+        });
+    }
+
+    galleryTextarea.addEventListener('input', renderGalleryPreview);
+    featInput?.addEventListener('change', renderGalleryPreview);
+    renderGalleryPreview();
+})();
+</script>
                 
 @* Tabs upload / URL  *@
 
@@ -528,11 +629,35 @@ async function fetchProduct(url) {
     updatePreview();
 }
 
-// ── Contagem de palavras ──────────────────────────────────────
+// ── Contagem de palavras + barra "throttle" (progresso de leitura) ────
 function updateWordCount() {
     const words = textarea.value.trim().split(/\s+/).filter(Boolean).length;
     document.getElementById('word-count').textContent = `${words} palavra${words !== 1 ? 's' : ''}`;
+
+    const readingMin = Math.max(1, Math.round(words / 200));
+    const targetMin  = parseInt(document.getElementById('reading-time-input')?.value) || 5;
+    const pct = Math.min(100, Math.round((readingMin / targetMin) * 100));
+
+    const fill = document.getElementById('throttle-fill');
+    if (fill) fill.style.width = pct + '%';
+
+    const wordsLabel = document.getElementById('throttle-words');
+    const timeLabel  = document.getElementById('throttle-time');
+    if (wordsLabel) wordsLabel.textContent = `${words} palavra${words !== 1 ? 's' : ''}`;
+    if (timeLabel)  timeLabel.textContent  = `leitura ~${readingMin}min de ${targetMin}min alvo`;
 }
+
+// ── Atualiza a pílula de status ao trocar o select ─────────────
+document.getElementById('status-select')?.addEventListener('change', (e) => {
+    const pill = document.getElementById('status-pill');
+    if (!pill) return;
+    const published = e.target.value === 'Published';
+    pill.classList.toggle('published', published);
+    pill.classList.toggle('draft', !published);
+    pill.textContent = published ? 'Publicado' : 'Rascunho';
+});
+
+document.getElementById('reading-time-input')?.addEventListener('input', updateWordCount);
 
 // ── Modos do editor (split / editor / preview) ────────────────
 function setEditorMode(mode) {

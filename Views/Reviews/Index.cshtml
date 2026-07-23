@@ -46,7 +46,7 @@
             <div class="reviews-featured-grid">
                 @foreach (var f in Model.FeaturedPosts)
                 {
-                    <a asp-controller="Home" asp-action="Detail"
+                    <a asp-controller="Post" asp-action="Detail"
                        asp-route-slug="@f.Slug" class="review-featured-card">
                         <div class="review-img-wrap">
                             <img class="review-img" src="@f.FeaturedImage" alt="@f.Title">
@@ -92,7 +92,7 @@
             <div class="posts-grid">
                 @foreach (var p in Model.Posts)
                 {
-                    <a asp-controller="Home" asp-action="Detail"
+                    <a asp-controller="Post" asp-action="Detail"
                        asp-route-slug="@p.Slug" class="article-card">
                         <div class="article-img-wrap">
                             <img class="article-img" src="@p.FeaturedImage" alt="@p.Title">

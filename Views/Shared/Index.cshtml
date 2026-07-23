@@ -1,0 +1,115 @@
+@model ThrottleBlog.ViewModels.CategoryPageViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = Model.Category.Name;
+}
+
+@* ============================================================================
+   1. GRID DE POSTS DA CATEGORIA (paginado)
+   ============================================================================ *@
+<section>
+    <div class="container">
+        <div class="section-header fade-up">
+            <div>
+                <div class="section-label">@Model.Category.Name</div>
+                <h2 class="section-title">@Model.Category.Name</h2>
+            </div>
+            <span style="color:var(--muted);font-size:.9rem;align-self:flex-end">
+                @Model.Pagination.TotalItems
+                artigo@(Model.Pagination.TotalItems != 1 ? "s" : "")
+            </span>
+        </div>
+
+        @if (!Model.Posts.Any())
+        {
+            <div class="fade-up" style="text-align:center;padding:4rem 0;color:var(--muted)">
+                <p style="font-size:1.1rem">Nenhum post publicado nesta categoria ainda.</p>
+                <a asp-controller="Home" asp-action="Index"
+                   class="btn-primary"
+                   style="margin-top:1rem;display:inline-flex">
+                    ← Voltar para Home
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="posts-grid fade-up">
+                @foreach (var p in Model.Posts)
+                {
+                    <a asp-controller="Post" asp-action="Detail"
+                       asp-route-slug="@p.Slug"
+                       class="article-card">
+                        <div class="article-img-wrap">
+                            @if (!string.IsNullOrEmpty(p.FeaturedImage))
+                            {
+                                <img class="article-img" src="@p.FeaturedImage" alt="@p.Title">
+                            }
+                            <span class="article-cat">@p.Category?.Name</span>
+                        </div>
+                        <div class="article-body">
+                            <h3 class="article-title">@p.Title</h3>
+                            <p class="article-excerpt">@p.Excerpt</p>
+                            <div class="article-meta">
+                                <span>@p.Author?.DisplayName</span>
+                                <span class="sep">·</span>
+                                <span>@p.PublishedAt?.ToString("dd MMM yyyy")</span>
+                                <span class="article-read-time">@p.ReadingTime min</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            @* ── PAGINAÇÃO ── *@
+            @if (Model.Pagination.TotalPages > 1)
+            {
+                <nav class="fade-up" aria-label="Paginação"
+                     style="display:flex;justify-content:center;align-items:center;
+                            gap:.5rem;padding:2.5rem 0 1rem">
+
+                    @if (Model.Pagination.HasPrev)
+                    {
+                        <a asp-controller="@Model.Category.Slug"
+                           asp-action="Index"
+                           asp-route-page="@(Model.Pagination.CurrentPage - 1)"
+                           class="btn-primary"
+                           style="padding:.5rem 1rem;font-size:.85rem">
+                            ← Anterior
+                        </a>
+                    }
+
+                    @for (var i = 1; i <= Model.Pagination.TotalPages; i++)
+                    {
+                        var active = i == Model.Pagination.CurrentPage;
+                        <a asp-controller="@Model.Category.Slug"
+                           asp-action="Index"
+                           asp-route-page="@i"
+                           aria-current="@(active ? "page" : null)"
+                           style="display:inline-flex;align-items:center;justify-content:center;
+                                  width:2.2rem;height:2.2rem;font-size:.85rem;font-weight:700;
+                                  text-decoration:none;
+                                  border:1px solid @(active ? "var(--red)" : "var(--border)");
+                                  background:@(active ? "var(--red)" : "transparent");
+                                  color:@(active ? "var(--white)" : "var(--muted)")">
+                            @i
+                        </a>
+                    }
+
+                    @if (Model.Pagination.HasNext)
+                    {
+                        <a asp-controller="@Model.Category.Slug"
+                           asp-action="Index"
+                           asp-route-page="@(Model.Pagination.CurrentPage + 1)"
+                           class="btn-primary"
+                           style="padding:.5rem 1rem;font-size:.85rem">
+                            Próxima →
+                        </a>
+                    }
+                </nav>
+            }
+        }
+
+    </div>
+</section>
+
+

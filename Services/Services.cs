@@ -217,10 +217,21 @@ public class PostService : IPostService
     private IQueryable<Post> BaseAdminQuery(string? search, string? category, string? status)
     {
         var q = _db.Posts.Include(p => p.Category).Include(p => p.Author).AsQueryable();
-        if (!string.IsNullOrWhiteSpace(search))   q = q.Where(p => p.Title.Contains(search) || p.Author.DisplayName.Contains(search));
-        if (!string.IsNullOrWhiteSpace(category)) q = q.Where(p => p.Category.Name == category);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = $"%{search.Trim()}%";
+            q = q.Where(p =>
+                EF.Functions.ILike(p.Title, term) ||
+                EF.Functions.ILike(p.Author.DisplayName, term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(category) && int.TryParse(category, out var categoryId))
+            q = q.Where(p => p.CategoryId == categoryId);
+
         if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<PostStatus>(status, out var ps))
             q = q.Where(p => p.Status == ps);
+
         return q;
     }
 

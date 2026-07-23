@@ -1,19 +1,21 @@
 @model ThrottleBlog.ViewModels.HomeViewModel
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = null; // home não precisa de prefixo
-
+    ViewData["Title"] = null; // A Home não precisa de prefixo no título da aba
 }
 
-@* ── HERO / FEATURED GRID ── *@
+@* ============================================================================
+   1. SEÇÃO HERO / GRID DE DESTAQUES (FEATURED POSTS)
+   ============================================================================ *@
 @if (Model.FeaturedPosts.Any())
 {
     <section class="hero-section">
         <div class="featured-grid container">
             
-            @* Post Grande *@
+            @* ── CARD GRANDE (Primeiro Post de Destaque) ── *@
             @{ var large = Model.FeaturedPosts.First(); }
-            <a asp-controller="Home" asp-action="Detail" asp-route-slug="@large.Slug" class="post-card large">
+            
+            <a asp-controller="Post" asp-action="Detail" asp-route-slug="@large.Slug" class="post-card large">
                 <div class="card-img-wrap">
                     <img class="card-img" src="@large.FeaturedImage" alt="@large.Title">
                 </div>
@@ -21,6 +23,8 @@
                     <span class="card-category">@large.Category.Name</span>
                     <h2 class="card-title">@large.Title</h2>
                     <p class="large card-excerpt">@large.Excerpt</p>
+                    
+                    @* Metadados do Card Grande *@
                     <div class="card-meta">
                         <span>@large.Author.DisplayName</span>
                         <span class="sep">·</span>
@@ -31,16 +35,18 @@
                 </div>
             </a>
             
-            @* Posts Menores *@
+            @* ── CARDS MENORES (Próximos 2 Posts de Destaque) ── *@
             @foreach (var p in Model.FeaturedPosts.Skip(1).Take(2))
             {
-                <a asp-controller="Home" asp-action="Detail" asp-route-slug="@p.Slug" class="post-card small">
+                <a asp-controller="Post" asp-action="Detail" asp-route-slug="@p.Slug">
                     <div class="card-img-wrap">
                         <img class="card-img" src="@p.FeaturedImage" alt="@p.Title">
                     </div>
                     <div class="card-body">
                         <span class="card-category">@p.Category.Name</span>
                         <h3 class="card-title">@p.Title</h3>
+                        
+                        @* Metadados do Card Menor *@
                         <div class="card-meta">
                             <span>@p.Author.DisplayName</span>
                             <span class="sep">·</span>
@@ -53,26 +59,35 @@
     </section>
 }
 
-@* ── ÚLTIMOS POSTS ── *@
+@* ============================================================================
+   2. SEÇÃO DOS ÚLTIMOS POSTS (FEED PRINCIPAL)
+   ============================================================================ *@
 <section>
     <div class="container">
+        @* Cabeçalho da Seção *@
         <div class="section-header fade-up">
             <div>
                 <div class="section-label">Novidades</div>
                 <h2 class="section-title">Últimos Posts</h2>
             </div>
         </div>
+        
+        @* Grid de Artigos Recentes *@
         <div class="posts-grid fade-up">
             @foreach (var p in Model.LatestPosts)
             {
-                <a asp-controller="Home" asp-action="Detail" asp-route-slug="@p.Slug" class="article-card">
+                <a asp-controller="Post" asp-action="Detail" asp-route-slug="@p.Slug" class="article-card">
+                    @* Capa do Artigo com Categoria *@
                     <div class="article-img-wrap">
                         <img class="article-img" src="@p.FeaturedImage" alt="@p.Title">
                         <span class="article-cat">@p.Category.Name</span>
                     </div>
+                    
+                    @* Conteúdo Textual do Card *@
                     <div class="article-body">
                         <h3 class="article-title">@p.Title</h3>
                         <p class="article-excerpt">@p.Excerpt</p>
+                        
                         <div class="article-meta">
                             <span>@p.Author.DisplayName</span>
                             <span class="article-read-time">@p.ReadingTime min</span>
@@ -84,18 +99,24 @@
     </div>
 </section>
 
-@* ── CATEGORIAS ── *@
+@* ============================================================================
+   3. SEÇÃO DE NAVEGAÇÃO POR CATEGORIAS
+   ============================================================================ *@
 <section>
     <div class="container">
+        @* Cabeçalho da Seção *@
         <div class="section-header fade-up">
             <div>
                 <div class="section-label">Navegar</div>
                 <h2 class="section-title">Categorias</h2>
             </div>
         </div>
+        
+        @* Grid de Categorias *@
         <div class="categories-grid fade-up">
             @foreach (var c in Model.Categories)
             {
+                @* Lógica para resolver rotas customizadas ou fallback para a rota genérica *@
                 var catCtrl = c.Slug?.ToLower() switch {
                     "novidades" => "Novidades",
                     "rotas"     => "Rotas",
@@ -103,11 +124,16 @@
                     "eventos"   => "Eventos",
                     _           => (string?)null
                 };
-                <a href="@(catCtrl is not null ? Url.Action("Index", catCtrl) : Url.Action("Category", "Home", new { slug = c.Slug }))" class="cat-card">
+                
+                <a href="@(catCtrl is not null ? Url.Action("Index", catCtrl) : Url.RouteUrl("CategoryPage", new { categorySlug = c.Slug }))" class="cat-card">
                     <img class="cat-img" src="@c.ImageUrl" alt="@c.Name">
                     <div class="cat-overlay"></div>
+                    
+                    @* Informações e Contador de Artigos Publicados *@
                     <div class="cat-label">
-                        <span class="cat-count">@c.Posts.Count(p => p.Status == ThrottleBlog.Models.PostStatus.Published) artigos</span>
+                        <span class="cat-count">
+                            @c.Posts.Count(p => p.Status == ThrottleBlog.Models.PostStatus.Published) artigos
+                        </span>
                         @c.Name
                     </div>
                 </a>
@@ -116,30 +142,47 @@
     </div>
 </section>
 
-@* ── NEWSLETTER ── *@
+@* ============================================================================
+   4. SEÇÃO DA NEWSLETTER (CAPTURA DE LEADS)
+   ============================================================================ *@
 @if (Model.Settings.NewsletterEnabled)
 {
     <section class="newsletter-section" id="newsletter">
         <div class="container">
             <div class="newsletter-inner fade-up">
+                
+                @* Textos de Chamada (Copywriting) *@
                 <div>
                     <span class="newsletter-tag">Newsletter</span>
                     <h2 class="newsletter-title">Acelere<br>seu feed</h2>
                     <p class="newsletter-desc">Receba toda semana as melhores matérias direto no seu e-mail.</p>
                 </div>
-                <form asp-controller="Home" asp-action="Newsletter" method="post" class="newsletter-form newsletter-form-ajax" data-message-id="newsletter-message">
+                
+                @* Formulário de Inscrição Ajax *@
+                <form asp-controller="Home" asp-action="Newsletter" method="post" 
+                      class="newsletter-form newsletter-form-ajax" data-message-id="newsletter-message">
+                    
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="returnTo" value="Index">
+                    
+                    @* Campos de Entrada *@
                     <input class="form-input" type="text"  name="Name"  placeholder="Seu nome" required>
                     <input class="form-input" type="email" name="Email" placeholder="Seu melhor e-mail" required>
-                    <button type="submit" class="btn-primary" style="width:100%;justify-content:center">
+                    
+                    @* Ação de Envio *@
+                    <button type="submit" class="btn-primary" style="width:100%; justify-content:center">
                         ▶ Quero Receber Gratuitamente
                     </button>
+                    
+                    @* Container para resposta Ajax (Sucesso/Erro) *@
                     <div id="newsletter-message" class="newsletter-message" role="status"></div>
-                    <p style="font-size:11px;color:var(--muted);text-align:center">
+                    
+                    @* Rodapé com Link Premium *@
+                    <p style="font-size:11px; color:var(--muted); text-align:center">
                         Sem spam. <a asp-controller="Home" asp-action="NewsletterPage" asp-fragment="premium" style="color:var(--red)">Conheça o plano Premium →</a>
                     </p>
                 </form>
+                
             </div>
         </div>
     </section>

@@ -28,7 +28,7 @@
             <div class="posts-grid fade-up">
                 @foreach (var p in Model.Posts)
                 {
-                    <a asp-controller="Home" asp-action="Detail" asp-route-slug="@p.Slug" class="article-card">
+                    <a asp-controller="Post" asp-action="Detail" asp-route-slug="@p.Slug" class="article-card">
                         <div class="article-img-wrap">
                             @if (!string.IsNullOrEmpty(p.FeaturedImage))
                             {

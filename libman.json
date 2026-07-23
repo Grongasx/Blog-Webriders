@@ -1,0 +1,10 @@
+{
+  "version": "3.0",
+  "defaultProvider": "unpkg",
+  "libraries": [
+    {
+      "library": "@hotwired/turbo@8.0.23",
+      "destination": "wwwroot/lib/turbo"
+    }
+  ]
+}

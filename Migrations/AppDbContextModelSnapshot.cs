@@ -307,6 +307,9 @@ namespace ThrottleBlog.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ControllerName")
+                        .HasColumnType("text");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
@@ -549,6 +552,9 @@ namespace ThrottleBlog.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("FeaturedImage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GalleryImages")
                         .HasColumnType("text");
 
                     b.Property<bool>("IsFeatured")

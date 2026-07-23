@@ -13,12 +13,13 @@ public class ApplicationUser : IdentityUser
 
 public class Category
 {
-    public int     Id        { get; set; }
-    public string  Name      { get; set; } = string.Empty;
-    public string  Slug      { get; set; } = string.Empty;
-    public string? ImageUrl  { get; set; }
-    public int     SortOrder { get; set; }
-    public ICollection<Post> Posts { get; set; } = new List<Post>();
+    public int     Id               { get; set; }
+    public string  Name             { get; set; } = string.Empty;
+    public string  Slug             { get; set; } = string.Empty;
+    public string? ControllerName   {get; set; }
+    public string? ImageUrl         { get; set; }
+    public int     SortOrder        { get; set; }
+    public ICollection<Post> Posts  { get; set; } = new List<Post>();
 }
 
 public enum PostStatus { Draft, Published }
@@ -31,6 +32,7 @@ public class Post
     public string     Excerpt       { get; set; } = string.Empty;
     public string     Content       { get; set; } = string.Empty;
     public string?    FeaturedImage { get; set; }
+    public string?    GalleryImages { get; set; }
     public int        ReadingTime   { get; set; } = 5;
     public PostStatus Status        { get; set; } = PostStatus.Draft;
     public bool       IsFeatured    { get; set; }

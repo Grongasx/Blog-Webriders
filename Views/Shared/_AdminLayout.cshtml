@@ -82,7 +82,10 @@
     <!-- MAIN -->
     <div class="main-content">
         <div class="topbar-admin">
-            <div class="topbar-title">@(ViewData["Title"] ?? "Dashboard")</div>
+            <div class="topbar-left">
+                <button id="menu-toggle" class="menu-toggle-btn" type="button" aria-label="Abrir menu">☰</button>
+                <div class="topbar-title">@(ViewData["Title"] ?? "Dashboard")</div>
+            </div>
             <div class="topbar-actions">
                 @await RenderSectionAsync("TopbarActions", required: false)
                 @if (ViewData["Title"]?.ToString() != "Novo Post")

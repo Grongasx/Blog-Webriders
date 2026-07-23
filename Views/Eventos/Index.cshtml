@@ -44,7 +44,7 @@
             <div class="events-upcoming">
                 @foreach (var e in Model.FeaturedPosts)
                 {
-                    <a asp-controller="Home" asp-action="Detail"
+                    <a asp-controller="Post" asp-action="Detail"
                        asp-route-slug="@e.Slug" class="event-upcoming-card">
                         <div class="event-date-badge">
                             <span class="event-date-day">@e.PublishedAt?.ToString("dd")</span>
@@ -86,7 +86,7 @@
             <div class="events-grid">
                 @foreach (var p in Model.Posts)
                 {
-                    <a asp-controller="Home" asp-action="Detail"
+                    <a asp-controller="Post" asp-action="Detail"
                        asp-route-slug="@p.Slug" class="event-card">
                         <div class="event-card-img-wrap">
                             <img class="event-card-img" src="@p.FeaturedImage" alt="@p.Title">

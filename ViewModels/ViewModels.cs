@@ -118,8 +118,10 @@ public class PostListViewModel
 // ─────────────────────────────────────────────
 public class PostFormViewModel : IValidatableObject
 {
-    private static readonly Regex ImagePathRegex = new(@"^/[\w\-./]+$", RegexOptions.Compiled);
+    private static readonly Regex ImagePathRegex =
+        new(@"^/[\w\-./]+$", RegexOptions.Compiled);
 
+    // ── Campos existentes (não alterados) ────────────────────
     public int Id { get; set; }
 
     [Required(ErrorMessage = "O título é obrigatório")]
@@ -145,11 +147,22 @@ public class PostFormViewModel : IValidatableObject
     public int CategoryId { get; set; }
 
     public string TagsRaw { get; set; } = string.Empty;
-
     public List<Category> Categories { get; set; } = new();
 
+    // ── NOVO: galeria de imagens extras ──────────────────────
+    /// <summary>
+    /// URLs adicionais separadas por vírgula.
+    /// Ex.: "https://cdn.x.com/a.jpg, /uploads/b.webp"
+    /// A primeira imagem do carrossel é sempre FeaturedImage;
+    /// as demais são retiradas deste campo.
+    /// </summary>
+    [StringLength(4000, ErrorMessage = "Limite de 4000 caracteres para URLs da galeria.")]
+    public string? GalleryImages { get; set; }
+
+    // ── Validação ─────────────────────────────────────────────
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        // Valida FeaturedImage (regra original)
         if (!string.IsNullOrWhiteSpace(FeaturedImage) &&
             !Uri.TryCreate(FeaturedImage, UriKind.Absolute, out _) &&
             !ImagePathRegex.IsMatch(FeaturedImage))
@@ -165,6 +178,52 @@ public class PostFormViewModel : IValidatableObject
                 "Imagem de destaque é obrigatória para publicar.",
                 [nameof(FeaturedImage)]);
         }
+
+        // Valida cada URL de GalleryImages
+        if (!string.IsNullOrWhiteSpace(GalleryImages))
+        {
+            var entries = GalleryImages
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrEmpty(s));
+
+            foreach (var url in entries)
+            {
+                bool isAbsolute = Uri.TryCreate(url, UriKind.Absolute, out _);
+                bool isLocalPath = ImagePathRegex.IsMatch(url);
+
+                if (!isAbsolute && !isLocalPath)
+                {
+                    yield return new ValidationResult(
+                        $"URL inválida na galeria: \"{url}\". Use URL absoluta ou caminho /uploads/...",
+                        [nameof(GalleryImages)]);
+                    yield break; // para no primeiro erro
+                }
+            }
+        }
+    }
+
+    // ── Helper: retorna todas as imagens em ordem ─────────────
+    /// <summary>
+    /// Lista combinada: FeaturedImage (índice 0) + GalleryImages.
+    /// Pronto para usar direto na View ou no Service.
+    /// </summary>
+    public IReadOnlyList<string> AllImages()
+    {
+        var list = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(FeaturedImage))
+            list.Add(FeaturedImage.Trim());
+
+        if (!string.IsNullOrWhiteSpace(GalleryImages))
+        {
+            list.AddRange(GalleryImages
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrEmpty(s)));
+        }
+
+        return list.AsReadOnly();
     }
 }
 
@@ -178,7 +237,7 @@ public class CategoryFormViewModel
     [Required(ErrorMessage = "O nome é obrigatório")]
     [StringLength(100)]
     public string Name { get; set; } = string.Empty;
-
+    public string? ControllerName { get; set; }
     [Url(ErrorMessage = "Informe uma URL válida")]
     public string? ImageUrl { get; set; }
 

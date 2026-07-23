@@ -46,7 +46,7 @@
             <div class="featured-trio">
                 @foreach (var f in Model.FeaturedPosts)
                 {
-                    <a asp-controller="Home" asp-action="Detail"
+                    <a asp-controller="Post" asp-action="Detail"
                        asp-route-slug="@f.Slug" class="featured-trio-card"
                        style="background-image:url('@f.FeaturedImage')">
                         <div class="trio-overlay"></div>
@@ -86,7 +86,7 @@
             <div class="posts-list-alt">
                 @foreach (var p in Model.Posts)
                 {
-                    <a asp-controller="Home" asp-action="Detail"
+                    <a asp-controller="Post" asp-action="Detail"
                        asp-route-slug="@p.Slug" class="list-card">
                         <div class="list-card-img-wrap">
                             <img class="list-card-img" src="@p.FeaturedImage" alt="@p.Title">

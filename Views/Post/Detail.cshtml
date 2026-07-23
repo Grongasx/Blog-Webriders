@@ -1,0 +1,357 @@
+@model ThrottleBlog.ViewModels.PostDetailViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = Model.Post.Title;
+
+    // Monta a lista de imagens: FeaturedImage + GalleryImages (separadas por vírgula)
+    var allImages = new List<string>();
+    if (!string.IsNullOrEmpty(Model.Post.FeaturedImage))
+        allImages.Add(Model.Post.FeaturedImage.Trim());
+
+    if (!string.IsNullOrEmpty(Model.Post.GalleryImages))
+    {
+        var extras = Model.Post.GalleryImages
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim())
+            .Where(s => !string.IsNullOrEmpty(s));
+        allImages.AddRange(extras);
+    }
+
+    bool hasCarousel = allImages.Count > 1;
+}
+
+@* ============================================================================
+   1. CORPO PRINCIPAL DO ARTIGO
+   ============================================================================ *@
+<article class="post-detail container">
+
+    @* ── CABEÇALHO ── *@
+    <header class="post-header">
+        <a class="post-back"
+           asp-controller="Home" asp-action="Category"
+           asp-route-slug="@Model.Post.Category.Slug">
+            ← @Model.Post.Category.Name
+        </a>
+        <span class="card-category">@Model.Post.Category.Name</span>
+        <h1 class="post-title">@Model.Post.Title</h1>
+        <p class="post-excerpt">@Model.Post.Excerpt</p>
+        <div class="post-meta">
+            <span>@Model.Post.Author.DisplayName</span>
+            <span class="sep">·</span>
+            <span>@Model.Post.PublishedAt?.ToString("dd 'de' MMMM 'de' yyyy")</span>
+            <span class="sep">·</span>
+            <span>@Model.Post.ReadingTime min de leitura</span>
+        </div>
+    </header>
+
+    @* ── IMAGEM / CARROSSEL ── *@
+    @if (allImages.Count == 1)
+    {
+        <img class="post-featured-img" src="@allImages[0]" alt="@Model.Post.Title">
+    }
+    else if (allImages.Count > 1)
+    {
+        <div class="pg-carousel" id="postCarousel" role="region" aria-label="Galeria de imagens do post">
+
+            @* Faixa deslizável *@
+            <div class="pg-track-wrap">
+                <ul class="pg-track" id="pgTrack" aria-live="polite">
+                    @for (int i = 0; i < allImages.Count; i++)
+                    {
+                        <li class="pg-slide" role="group"
+                            aria-label="Imagem @(i + 1) de @allImages.Count"
+                            aria-hidden="@(i == 0 ? "false" : "true")">
+                            <img src="@allImages[i]"
+                                 alt="@Model.Post.Title — imagem @(i + 1)"
+                                 loading="@(i == 0 ? "eager" : "lazy")"
+                                 draggable="false">
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            @* Dots de progresso *@
+            <div class="pg-dots" role="tablist" aria-label="Navegação de imagens">
+                @for (int i = 0; i < allImages.Count; i++)
+                {
+                    <button class="pg-dot @(i == 0 ? "active" : "")"
+                            role="tab"
+                            aria-selected="@(i == 0 ? "true" : "false")"
+                            aria-label="Ir para imagem @(i + 1)"
+                            data-index="@i">
+                    </button>
+                }
+            </div>
+
+            @* Contador discreto (ex: 1 / 5) *@
+            <div class="pg-counter" aria-hidden="true">
+                <span id="pgCurrent">1</span> / <span>@allImages.Count</span>
+            </div>
+
+        </div>
+    }
+
+    @* ── CONTEÚDO ── *@
+    <div class="post-content">
+        @Html.Raw(Model.ContentHtml)
+    </div>
+
+    @* ── TAGS ── *@
+    @if (Model.Post.PostTags.Any())
+    {
+        <div class="post-tags">
+            @foreach (var pt in Model.Post.PostTags)
+            {
+                <a class="tag"
+                   asp-controller="Home" asp-action="Search"
+                   asp-route-q="@pt.Tag.Name">
+                    @pt.Tag.Name
+                </a>
+            }
+        </div>
+    }
+
+</article>
+
+@* ============================================================================
+   2. POSTS RELACIONADOS
+   ============================================================================ *@
+@if (Model.RelatedPosts.Any())
+{
+    <section>
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <div class="section-label">Veja também</div>
+                    <h2 class="section-title">Posts Relacionados</h2>
+                </div>
+            </div>
+            <div class="posts-grid">
+                @foreach (var p in Model.RelatedPosts)
+                {
+                    <a href="@Url.Action("Detail", "Home", new { slug = p.Slug })" class="article-card">
+                        <div class="article-img-wrap">
+                            <img class="article-img" src="@p.FeaturedImage" alt="@p.Title">
+                            <span class="article-cat">@p.Category.Name</span>
+                        </div>
+                        <div class="article-body">
+                            <h3 class="article-title">@p.Title</h3>
+                            <p class="article-excerpt">@p.Excerpt</p>
+                            <div class="article-meta">
+                                <span>@p.Author.DisplayName</span>
+                                <span class="article-read-time">@p.ReadingTime min</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+@* ============================================================================
+   3. ESTILOS DO CARROSSEL
+   ============================================================================ *@
+@if (hasCarousel)
+{
+    <style>
+        /* ── Wrapper ── */
+        .pg-carousel {
+            position: relative;
+            width: 100%;
+            margin: 1.5rem 0 2rem;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ── Janela com overflow oculto ── */
+        .pg-track-wrap {
+            overflow: hidden;
+            border-radius: 12px;
+            touch-action: pan-y; /* permite scroll vertical, mas captura horizontal */
+        }
+
+        /* ── Faixa horizontal ── */
+        .pg-track {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            /* translate controlado via JS */
+            will-change: transform;
+            transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* ── Cada slide ocupa 100% da janela ── */
+        .pg-slide {
+            flex: 0 0 100%;
+            width: 100%;
+        }
+
+        .pg-slide img {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            display: block;
+            pointer-events: none; /* impede drag nativo da imagem */
+        }
+
+        /* ── Dots ── */
+        .pg-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .pg-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: none;
+            background: var(--border-color, #ccc);
+            cursor: pointer;
+            padding: 0;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .pg-dot.active {
+            background: var(--accent-color, #e63946);
+            transform: scale(1.3);
+        }
+
+        /* ── Contador ── */
+        .pg-counter {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            pointer-events: none;
+        }
+
+        /* Respeita preferência de movimento reduzido */
+        @@media (prefers-reduced-motion: reduce) {
+            .pg-track { transition: none; }
+        }
+    </style>
+}
+
+@* ============================================================================
+   4. SCRIPT DO CARROSSEL (só injeta se houver galeria)
+   ============================================================================ *@
+@if (hasCarousel)
+{
+    <script>
+    (function () {
+        const track   = document.getElementById('pgTrack');
+        const dots    = document.querySelectorAll('.pg-dot');
+        const counter = document.getElementById('pgCurrent');
+        const total   = @allImages.Count;
+
+        if (!track) return;
+
+        let current   = 0;
+        let startX    = 0;
+        let startY    = 0;
+        let isDragging = false;
+        let dragDeltaX = 0;
+        const THRESHOLD = 50; // px mínimo para considerar swipe
+
+        // ── Navega para um índice ──
+        function goTo(idx) {
+            current = (idx + total) % total;
+            track.style.transform = `translateX(-${current * 100}%)`;
+
+            dots.forEach((d, i) => {
+                d.classList.toggle('active', i === current);
+                d.setAttribute('aria-selected', i === current ? 'true' : 'false');
+            });
+
+            // Acessibilidade: atualiza aria-hidden
+            track.querySelectorAll('.pg-slide').forEach((s, i) => {
+                s.setAttribute('aria-hidden', i === current ? 'false' : 'true');
+            });
+
+            if (counter) counter.textContent = current + 1;
+        }
+
+        // ── Dots ──
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => goTo(parseInt(dot.dataset.index)));
+        });
+
+        // ── Touch ──
+        track.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            isDragging = true;
+            dragDeltaX = 0;
+        }, { passive: true });
+
+        track.addEventListener('touchmove', e => {
+            if (!isDragging) return;
+            dragDeltaX = e.touches[0].clientX - startX;
+            const deltaY = Math.abs(e.touches[0].clientY - startY);
+
+            // Se o movimento for mais vertical, deixa a página rolar
+            if (Math.abs(dragDeltaX) < deltaY) {
+                isDragging = false;
+                return;
+            }
+
+            // Feedback visual durante o arrasto (sem transição suave)
+            track.style.transition = 'none';
+            const offset = -(current * 100) + (dragDeltaX / track.parentElement.offsetWidth * 100);
+            track.style.transform = `translateX(${offset}%)`;
+        }, { passive: true });
+
+        track.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            // Restaura transição antes de chamar goTo
+            track.style.transition = '';
+
+            if (dragDeltaX < -THRESHOLD) goTo(current + 1);
+            else if (dragDeltaX > THRESHOLD) goTo(current - 1);
+            else goTo(current); // volta ao slide atual (snap)
+        });
+
+        // ── Mouse (desktop fallback para arrastar) ──
+        track.addEventListener('mousedown', e => {
+            startX = e.clientX;
+            isDragging = true;
+            dragDeltaX = 0;
+            track.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            dragDeltaX = e.clientX - startX;
+            track.style.transition = 'none';
+            const offset = -(current * 100) + (dragDeltaX / track.parentElement.offsetWidth * 100);
+            track.style.transform = `translateX(${offset}%)`;
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            track.style.cursor = '';
+            track.style.transition = '';
+            if (dragDeltaX < -THRESHOLD) goTo(current + 1);
+            else if (dragDeltaX > THRESHOLD) goTo(current - 1);
+            else goTo(current);
+        });
+
+        // ── Teclado (acessibilidade) ──
+        document.getElementById('postCarousel')?.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') goTo(current + 1);
+            if (e.key === 'ArrowLeft')  goTo(current - 1);
+        });
+    })();
+    </script>
+}
